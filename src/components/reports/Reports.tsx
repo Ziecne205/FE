@@ -12,6 +12,20 @@ import {
 } from '@/components/ui/select';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { ReportData } from '@/types';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface ReportsProps {
   reportData: ReportData[];
@@ -39,6 +53,38 @@ export function Reports({ reportData, onExport, onDateRangeChange }: ReportsProp
     (max, day) => (day.revenue > max.revenue ? day : max),
     reportData[0] || { revenue: 0, date: '', sessions: 0, occupancy_rate: 0 }
   );
+
+  // Format data for charts
+  const chartData = reportData.map((day) => ({
+    date: formatDate(day.date, 'dd/MM'),
+    revenue: day.revenue,
+    sessions: day.sessions,
+    occupancy: day.occupancy_rate,
+  }));
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="text-sm font-medium text-gray-900 mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm text-gray-600">
+              <span style={{ color: entry.color }}>{entry.name}: </span>
+              <span className="font-semibold">
+                {entry.name === 'Doanh thu'
+                  ? formatCurrency(entry.value)
+                  : entry.name === 'Tỷ lệ lấp đầy'
+                  ? `${entry.value}%`
+                  : entry.value}
+              </span>
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -136,18 +182,93 @@ export function Reports({ reportData, onExport, onDateRangeChange }: ReportsProp
         </div>
       </div>
 
-      {/* Revenue Chart Placeholder */}
+      {/* Revenue Chart */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Biểu đồ Doanh thu</h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-center">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">Biểu đồ sẽ được hiển thị ở đây</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Tích hợp thư viện biểu đồ (Chart.js, Recharts, v.v.)
-            </p>
-          </div>
-        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="date"
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: '14px' }} />
+            <Line
+              type="monotone"
+              dataKey="revenue"
+              name="Doanh thu"
+              stroke="#2563eb"
+              strokeWidth={2}
+              dot={{ fill: '#2563eb', r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Occupancy Chart */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Tỷ lệ lấp đầy</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="date"
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+              domain={[0, 100]}
+              tickFormatter={(value) => `${value}%`}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: '14px' }} />
+            <Area
+              type="monotone"
+              dataKey="occupancy"
+              name="Tỷ lệ lấp đầy"
+              stroke="#10b981"
+              fill="#10b981"
+              fillOpacity={0.3}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Sessions Chart */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Xu hướng phiên gửi xe</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="date"
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: '14px' }} />
+            <Bar
+              dataKey="sessions"
+              name="Số phiên"
+              fill="#f59e0b"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Detailed Table */}

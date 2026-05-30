@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Parking, CheckCircle, Car, AlertTriangle } from 'lucide-react';
+import { ParkingCircle, CheckCircle, Car, AlertTriangle } from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import { REFRESH_INTERVAL } from '@/lib/constants';
 import type { OccupancyStats } from '@/types';
@@ -32,7 +32,7 @@ export function StaffDashboard({ stats, onRefresh }: StaffDashboardProps) {
         <StatsCard
           title="Tổng số chỗ"
           value={stats.total_slots}
-          icon={Parking}
+          icon={ParkingCircle}
           iconColor="blue"
         />
 

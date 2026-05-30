@@ -59,12 +59,20 @@ export function formatDateTime(date: string | Date): string {
 /**
  * Format date only
  */
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date, format?: string): string {
+  const dateObj = new Date(date);
+
+  if (format === 'dd/MM') {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+  }
+
   return new Intl.DateTimeFormat('vi-VN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date(date));
+  }).format(dateObj);
 }
 
 /**

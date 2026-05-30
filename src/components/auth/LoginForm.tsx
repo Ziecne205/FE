@@ -6,6 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email không được để trống')
+    .email('Email không hợp lệ'),
+  password: z
+    .string()
+    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+    .max(50, 'Mật khẩu không được quá 50 ký tự'),
+  remember: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string, remember: boolean) => void;
@@ -13,18 +30,30 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(email, password, remember);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      remember: false,
+    },
+  });
+
+  const remember = watch('remember');
+
+  const onFormSubmit = (data: LoginFormData) => {
+    onSubmit(data.email, data.password, data.remember || false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       {/* Email Field */}
       <div>
         <Label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
@@ -32,15 +61,15 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
         </Label>
         <Input
           id="email"
-          name="email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
           placeholder="manager@parking.vn"
-          required
-          className="w-full"
           disabled={isLoading}
+          className="w-full"
+          {...register('email')}
         />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+        )}
       </div>
 
       {/* Password Field */}
@@ -51,14 +80,11 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
         <div className="relative">
           <Input
             id="password"
-            name="password"
             type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            required
-            className="w-full pr-10"
             disabled={isLoading}
+            className="w-full pr-10"
+            {...register('password')}
           />
           <button
             type="button"
@@ -73,6 +99,9 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
             )}
           </button>
         </div>
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+        )}
       </div>
 
       {/* Options */}
@@ -81,7 +110,10 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
           <Checkbox
             id="remember"
             checked={remember}
-            onCheckedChange={(checked) => setRemember(checked as boolean)}
+            onCheckedChange={(checked) => {
+              const event = { target: { name: 'remember', value: checked } };
+              register('remember').onChange(event);
+            }}
             disabled={isLoading}
           />
           <Label

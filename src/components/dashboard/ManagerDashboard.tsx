@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Parking, CheckCircle, Car, DollarSign } from 'lucide-react';
+import { ParkingCircle, CheckCircle, Car, DollarSign } from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import { formatCurrency } from '@/lib/utils';
 import { REFRESH_INTERVAL } from '@/lib/constants';
@@ -33,7 +33,7 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
         <StatsCard
           title="Tổng số chỗ"
           value={stats.total_slots}
-          icon={Parking}
+          icon={ParkingCircle}
           iconColor="blue"
         />
 

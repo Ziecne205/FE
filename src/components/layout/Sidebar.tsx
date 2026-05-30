@@ -25,17 +25,16 @@ interface SidebarProps {
 
 const managerNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
-  { href: '/slot-map', icon: Map, label: 'Sơ đồ vị trí' },
+  { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/bookings', icon: Calendar, label: 'Đặt chỗ' },
   { href: '/exceptions', icon: AlertTriangle, label: 'Ngoại lệ' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
-  { href: '/settings', icon: Settings, label: 'Cài đặt' },
 ];
 
 const staffNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
-  { href: '/slot-map', icon: Map, label: 'Sơ đồ vị trí' },
+  { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/exceptions', icon: AlertTriangle, label: 'Ngoại lệ' },
 ];
