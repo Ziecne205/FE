@@ -1,15 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
 import { ManagerDashboard } from '@/components/dashboard/ManagerDashboard'
 import { StaffDashboard } from '@/components/dashboard/StaffDashboard'
+import { ManualEntryModal } from '@/components/dashboard/ManualEntryModal'
 import { useAuthStore } from '@/store'
-import { useSlots } from '@/hooks'
+import { useSlots, useCreateSession, type CreateSessionInput } from '@/hooks'
 import type { OccupancyStats } from '@/types'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
   const { data: slots, refetch, isLoading } = useSlots()
+  const createSession = useCreateSession()
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   if (isLoading || !slots) {
     return (
@@ -37,12 +41,32 @@ export default function Dashboard() {
     current_revenue: slots.filter((s) => s.status === 'Occupied').length * 10000 * 2, // Mock revenue
   }
 
+  // Filter available slots for manual entry
+  const availableSlots = slots.filter((slot) => slot.status === 'Available')
+
+  const handleManualEntry = async (data: CreateSessionInput) => {
+    await createSession.mutateAsync(data)
+  }
+
   return (
     <ProtectedLayout>
       {user?.role === 'Manager' ? (
         <ManagerDashboard stats={stats} onRefresh={() => refetch()} />
       ) : (
-        <StaffDashboard stats={stats} onRefresh={() => refetch()} />
+        <>
+          <StaffDashboard
+            stats={stats}
+            onRefresh={() => refetch()}
+            onManualEntry={() => setIsModalOpen(true)}
+          />
+
+          <ManualEntryModal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            availableSlots={availableSlots}
+            onSubmit={handleManualEntry}
+          />
+        </>
       )}
     </ProtectedLayout>
   )

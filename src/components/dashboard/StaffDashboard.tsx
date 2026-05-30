@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ParkingCircle, CheckCircle, Car, AlertTriangle } from 'lucide-react';
+import { ParkingCircle, CheckCircle, Car, AlertTriangle, Plus } from 'lucide-react';
 import { StatsCard } from './StatsCard';
+import { Button } from '@/components/ui/button';
 import { REFRESH_INTERVAL } from '@/lib/constants';
 import type { OccupancyStats } from '@/types';
 
 interface StaffDashboardProps {
   stats: OccupancyStats;
   onRefresh?: () => void;
+  onManualEntry?: () => void;
 }
 
-export function StaffDashboard({ stats, onRefresh }: StaffDashboardProps) {
+export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboardProps) {
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
@@ -27,6 +29,20 @@ export function StaffDashboard({ stats, onRefresh }: StaffDashboardProps) {
 
   return (
     <div className="space-y-6">
+      {/* Header with Manual Entry Button */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">Tổng quan</h2>
+          <p className="text-sm text-gray-600">Thông tin tổng quan về bãi đỗ xe</p>
+        </div>
+        {onManualEntry && (
+          <Button onClick={onManualEntry} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nhập thủ công
+          </Button>
+        )}
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard

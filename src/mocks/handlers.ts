@@ -39,8 +39,29 @@ export const handlers = [
   }),
 
   http.post('/api/sessions', async ({ request }) => {
-    const newSession = await request.json()
-    mockSessions.push(newSession as any)
+    const data = await request.json() as any
+
+    // Create new parking session
+    const newSession = {
+      id: `session-${Date.now()}`,
+      booking_id: undefined,
+      vehicle_id: `vehicle-${Date.now()}`,
+      slot_id: data.slot_id,
+      license_plate: data.license_plate,
+      entry_time: new Date().toISOString(),
+      exit_time: undefined,
+      duration_minutes: undefined,
+      status: 'Active' as const,
+    }
+
+    mockSessions.push(newSession)
+
+    // Update slot status to Occupied
+    const slotIndex = mockSlots.findIndex((s) => s.id === data.slot_id)
+    if (slotIndex !== -1) {
+      mockSlots[slotIndex].status = 'Occupied'
+    }
+
     return HttpResponse.json(newSession, { status: 201 })
   }),
 
@@ -50,8 +71,34 @@ export const handlers = [
   }),
 
   http.post('/api/bookings', async ({ request }) => {
-    const newBooking = await request.json()
-    mockBookings.push(newBooking as any)
+    const data = await request.json() as any
+
+    // Calculate duration in hours
+    const startTime = new Date(data.booking_start)
+    const endTime = new Date(data.booking_end)
+    const durationHours = Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60))
+
+    // Create new booking
+    const newBooking = {
+      id: `booking-${Date.now()}`,
+      user_id: `user-${Date.now()}`,
+      vehicle_id: `vehicle-${Date.now()}`,
+      slot_id: data.slot_id,
+      booking_start_time: data.booking_start,
+      booking_end_time: data.booking_end,
+      duration_hours: durationHours,
+      status: 'Pending' as const,
+      created_at: new Date().toISOString(),
+    }
+
+    mockBookings.push(newBooking)
+
+    // Update slot status to Reserved
+    const slotIndex = mockSlots.findIndex((s) => s.id === data.slot_id)
+    if (slotIndex !== -1) {
+      mockSlots[slotIndex].status = 'Reserved'
+    }
+
     return HttpResponse.json(newBooking, { status: 201 })
   }),
 

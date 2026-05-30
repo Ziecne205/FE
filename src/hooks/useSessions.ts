@@ -32,15 +32,21 @@ export function useActiveSessions() {
   })
 }
 
+export interface CreateSessionInput {
+  license_plate: string
+  slot_id: string
+  vehicle_type: 'car'
+}
+
 export function useCreateSession() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (session: Partial<ParkingSession>) => {
+    mutationFn: async (data: CreateSessionInput) => {
       const response = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(session),
+        body: JSON.stringify(data),
       })
       if (!response.ok) {
         const error = new Error('Không thể tạo phiên đỗ xe')
@@ -50,10 +56,10 @@ export function useCreateSession() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
-      toast.success('Tạo phiên đỗ xe thành công')
+      queryClient.invalidateQueries({ queryKey: ['slots'] })
     },
     onError: () => {
-      toast.error('Không thể tạo phiên đỗ xe')
+      // Error toast will be shown by the modal
     },
   })
 }

@@ -1,15 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
 import { BookingManagement } from '@/components/bookings/BookingManagement'
+import { CreateBookingModal } from '@/components/bookings/CreateBookingModal'
 import { useAuthStore } from '@/store'
-import { useBookings, useSlots } from '@/hooks'
+import { useBookings, useSlots, useCreateBooking, type CreateBookingInput } from '@/hooks'
 import type { BookingWithDetails } from '@/types'
 
 export default function BookingsPage() {
   const { user } = useAuthStore()
   const { data: bookings, refetch, isLoading: bookingsLoading } = useBookings()
   const { data: slots, isLoading: slotsLoading } = useSlots()
+  const createBooking = useCreateBooking()
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   if (bookingsLoading || slotsLoading || !bookings || !slots || !user) {
     return (
@@ -35,12 +39,27 @@ export default function BookingsPage() {
     }
   })
 
+  // Filter available slots for booking
+  const availableSlots = slots.filter((slot) => slot.status === 'Available')
+
+  const handleCreateBooking = async (data: CreateBookingInput) => {
+    await createBooking.mutateAsync(data)
+  }
+
   return (
     <ProtectedLayout>
       <BookingManagement
         bookings={bookingsWithDetails}
         userRole={user.role as 'Manager' | 'Staff'}
         onRefresh={() => refetch()}
+        onCreateBooking={() => setIsModalOpen(true)}
+      />
+
+      <CreateBookingModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        availableSlots={availableSlots}
+        onSubmit={handleCreateBooking}
       />
     </ProtectedLayout>
   )

@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
 import { ExceptionHandling } from '@/components/exceptions/ExceptionHandling'
+import { ResolveExceptionModal } from '@/components/exceptions/ResolveExceptionModal'
 import { useAuthStore } from '@/store'
-import { useExceptions, useSessions, useSlots } from '@/hooks'
+import { useExceptions, useSessions, useSlots, useResolveException } from '@/hooks'
 import type { ExceptionWithDetails } from '@/types'
 
 export default function ExceptionsPage() {
@@ -11,6 +13,9 @@ export default function ExceptionsPage() {
   const { data: exceptions, refetch, isLoading: exceptionsLoading } = useExceptions()
   const { data: sessions, isLoading: sessionsLoading } = useSessions()
   const { data: slots, isLoading: slotsLoading } = useSlots()
+  const resolveException = useResolveException()
+  const [selectedException, setSelectedException] = useState<ExceptionWithDetails | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   if (exceptionsLoading || sessionsLoading || slotsLoading || !exceptions || !sessions || !slots || !user) {
     return (
@@ -37,12 +42,38 @@ export default function ExceptionsPage() {
     }
   })
 
+  const handleResolveClick = (exception: ExceptionWithDetails) => {
+    setSelectedException(exception)
+    setIsModalOpen(true)
+  }
+
+  const handleResolveException = async (exceptionId: string, notes: string) => {
+    await resolveException.mutateAsync({
+      exceptionId,
+      resolvedBy: user.id,
+      notes,
+    })
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedException(null)
+  }
+
   return (
     <ProtectedLayout>
       <ExceptionHandling
         exceptions={exceptionsWithDetails}
         userRole={user.role as 'Manager' | 'Staff'}
         onRefresh={() => refetch()}
+        onResolveException={handleResolveClick}
+      />
+
+      <ResolveExceptionModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        exception={selectedException}
+        onSubmit={handleResolveException}
       />
     </ProtectedLayout>
   )

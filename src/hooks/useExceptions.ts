@@ -21,11 +21,11 @@ export function useResolveException() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ exceptionId, resolvedBy }: { exceptionId: string; resolvedBy: string }) => {
+    mutationFn: async ({ exceptionId, resolvedBy, notes }: { exceptionId: string; resolvedBy: string; notes: string }) => {
       const response = await fetch(`/api/exceptions/${exceptionId}/resolve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolved_by: resolvedBy }),
+        body: JSON.stringify({ resolved_by: resolvedBy, resolution_notes: notes }),
       })
       if (!response.ok) {
         const error = new Error('Không thể giải quyết ngoại lệ')
@@ -35,10 +35,9 @@ export function useResolveException() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exceptions'] })
-      toast.success('Giải quyết ngoại lệ thành công')
     },
     onError: () => {
-      toast.error('Không thể giải quyết ngoại lệ')
+      // Error toast will be shown by the modal
     },
   })
 }

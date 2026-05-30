@@ -17,15 +17,25 @@ export function useBookings() {
   })
 }
 
+export interface CreateBookingInput {
+  customer_name: string
+  customer_phone: string
+  customer_email: string
+  license_plate: string
+  slot_id: string
+  booking_start: string
+  booking_end: string
+}
+
 export function useCreateBooking() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (booking: Partial<Booking>) => {
+    mutationFn: async (data: CreateBookingInput) => {
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(booking),
+        body: JSON.stringify(data),
       })
       if (!response.ok) {
         const error = new Error('Không thể tạo đặt chỗ')
@@ -36,10 +46,9 @@ export function useCreateBooking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       queryClient.invalidateQueries({ queryKey: ['slots'] })
-      toast.success('Tạo đặt chỗ thành công')
     },
     onError: () => {
-      toast.error('Không thể tạo đặt chỗ')
+      // Error toast will be shown by the modal
     },
   })
 }

@@ -28,7 +28,7 @@ interface ExceptionHandlingProps {
   exceptions: ExceptionWithDetails[];
   onRefresh?: () => void;
   onExceptionClick?: (exception: ExceptionWithDetails) => void;
-  onResolve?: (exceptionId: string) => void;
+  onResolveException?: (exception: ExceptionWithDetails) => void;
   userRole: 'Manager' | 'Staff';
 }
 
@@ -36,7 +36,7 @@ export function ExceptionHandling({
   exceptions,
   onRefresh,
   onExceptionClick,
-  onResolve,
+  onResolveException,
   userRole,
 }: ExceptionHandlingProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,13 +204,13 @@ export function ExceptionHandling({
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      {exception.status === 'Open' && onResolve && (
+                      {exception.status === 'Open' && onResolveException && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onResolve(exception.id);
+                            onResolveException(exception);
                           }}
                           className="gap-1"
                         >
