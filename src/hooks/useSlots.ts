@@ -8,11 +8,13 @@ export function useSlots() {
     queryFn: async () => {
       const response = await fetch('/api/slots')
       if (!response.ok) {
-        const error = new Error('Không thể tải danh sách chỗ đỗ')
-        toast.error('Không thể tải danh sách chỗ đỗ')
-        throw error
+        throw new Error('Không thể tải danh sách chỗ đỗ')
       }
       return response.json() as Promise<Slot[]>
+    },
+    throwOnError: (error) => {
+      toast.error('Không thể tải danh sách chỗ đỗ')
+      return false
     },
   })
 }

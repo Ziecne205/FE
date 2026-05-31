@@ -1,8 +1,8 @@
 'use client'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
 import { ReactNode, useState, useEffect } from 'react'
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -16,6 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
             refetchOnMount: true, // Always refetch on mount
             refetchOnReconnect: true,
             retry: 1,
+            throwOnError: false,
           },
         },
       })
@@ -38,7 +39,14 @@ export function Providers({ children }: { children: ReactNode }) {
   }, [])
 
   if (!mockingEnabled) {
-    return null
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Đang khởi tạo...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

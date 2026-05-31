@@ -3,7 +3,10 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 
-const inter = Inter({ subsets: ['latin', 'vietnamese'] })
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Smart Parking Management System',

@@ -8,11 +8,13 @@ export function useBookings() {
     queryFn: async () => {
       const response = await fetch('/api/bookings')
       if (!response.ok) {
-        const error = new Error('Không thể tải danh sách đặt chỗ')
-        toast.error('Không thể tải danh sách đặt chỗ')
-        throw error
+        throw new Error('Không thể tải danh sách đặt chỗ')
       }
       return response.json() as Promise<Booking[]>
+    },
+    throwOnError: (error) => {
+      toast.error('Không thể tải danh sách đặt chỗ')
+      return false
     },
   })
 }

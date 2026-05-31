@@ -8,11 +8,13 @@ export function useExceptions() {
     queryFn: async () => {
       const response = await fetch('/api/exceptions')
       if (!response.ok) {
-        const error = new Error('Không thể tải danh sách ngoại lệ')
-        toast.error('Không thể tải danh sách ngoại lệ')
-        throw error
+        throw new Error('Không thể tải danh sách ngoại lệ')
       }
       return response.json() as Promise<Exception[]>
+    },
+    throwOnError: (error) => {
+      toast.error('Không thể tải danh sách ngoại lệ')
+      return false
     },
   })
 }

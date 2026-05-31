@@ -92,14 +92,10 @@ export function CreateBookingModal({
   const selectedSlotId = watch('slot_id');
 
   const handleFormSubmit = async (data: BookingFormData) => {
-    try {
-      await onSubmit(data);
-      toast.success('Tạo đặt chỗ thành công');
-      reset();
-      onClose();
-    } catch (error) {
-      toast.error('Không thể tạo đặt chỗ. Vui lòng thử lại.');
-    }
+    await onSubmit(data);
+    toast.success('Tạo đặt chỗ thành công');
+    reset();
+    onClose();
   };
 
   const handleClose = () => {

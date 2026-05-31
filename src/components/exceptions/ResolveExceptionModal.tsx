@@ -52,14 +52,10 @@ export function ResolveExceptionModal({
   const handleFormSubmit = async (data: ResolveExceptionFormData) => {
     if (!exception) return;
 
-    try {
-      await onSubmit(exception.id, data.resolution_notes);
-      toast.success('Giải quyết ngoại lệ thành công');
-      reset();
-      onClose();
-    } catch (error) {
-      toast.error('Không thể giải quyết ngoại lệ. Vui lòng thử lại.');
-    }
+    await onSubmit(exception.id, data.resolution_notes);
+    toast.success('Giải quyết ngoại lệ thành công');
+    reset();
+    onClose();
   };
 
   const handleClose = () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store'
 import { DashboardLayout as BaseDashboardLayout } from '@/components/layout/DashboardLayout'
@@ -23,21 +23,15 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthStore()
-  const [isClient, setIsClient] = useState(false)
-
-  // Handle hydration
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   useEffect(() => {
-    if (isClient && !isAuthenticated) {
+    if (!isAuthenticated) {
       router.push('/login')
     }
-  }, [isClient, isAuthenticated, router])
+  }, [isAuthenticated, router])
 
-  // Show loading during hydration or when not authenticated
-  if (!isClient || !isAuthenticated || !user) {
+  // Show loading while checking auth or if not authenticated
+  if (!isAuthenticated || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">

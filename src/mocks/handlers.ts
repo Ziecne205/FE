@@ -3,15 +3,29 @@ import { mockSlots } from './data/slots'
 import { mockSessions } from './data/sessions'
 import { mockBookings } from './data/bookings'
 import { mockExceptions } from './data/exceptions'
+import type {
+  UpdateSlotRequest,
+  CreateSessionRequest,
+  CreateBookingRequest,
+  UpdateBookingRequest,
+  ResolveExceptionRequest,
+  LoginRequest,
+} from './types'
+
+// Create deep clones to avoid mutation
+let slots = structuredClone(mockSlots)
+let sessions = structuredClone(mockSessions)
+let bookings = structuredClone(mockBookings)
+let exceptions = structuredClone(mockExceptions)
 
 export const handlers = [
   // Slots endpoints
   http.get('/api/slots', () => {
-    return HttpResponse.json(mockSlots)
+    return HttpResponse.json(slots)
   }),
 
   http.get('/api/slots/:id', ({ params }) => {
-    const slot = mockSlots.find((s) => s.id === params.id)
+    const slot = slots.find((s) => s.id === params.id)
     if (!slot) {
       return new HttpResponse(null, { status: 404 })
     }
@@ -19,27 +33,27 @@ export const handlers = [
   }),
 
   http.patch('/api/slots/:id', async ({ params, request }) => {
-    const updates = await request.json() as Record<string, any>
-    const slotIndex = mockSlots.findIndex((s) => s.id === params.id)
+    const updates = await request.json() as UpdateSlotRequest
+    const slotIndex = slots.findIndex((s) => s.id === params.id)
     if (slotIndex === -1) {
       return new HttpResponse(null, { status: 404 })
     }
-    mockSlots[slotIndex] = { ...mockSlots[slotIndex], ...updates }
-    return HttpResponse.json(mockSlots[slotIndex])
+    slots[slotIndex] = { ...slots[slotIndex], ...updates }
+    return HttpResponse.json(slots[slotIndex])
   }),
 
   // Sessions endpoints
   http.get('/api/sessions', () => {
-    return HttpResponse.json(mockSessions)
+    return HttpResponse.json(sessions)
   }),
 
   http.get('/api/sessions/active', () => {
-    const activeSessions = mockSessions.filter((s) => s.status === 'Active')
+    const activeSessions = sessions.filter((s) => s.status === 'Active')
     return HttpResponse.json(activeSessions)
   }),
 
   http.post('/api/sessions', async ({ request }) => {
-    const data = await request.json() as any
+    const data = await request.json() as CreateSessionRequest
 
     // Create new parking session
     const newSession = {
@@ -54,12 +68,12 @@ export const handlers = [
       status: 'Active' as const,
     }
 
-    mockSessions.push(newSession)
+    sessions.push(newSession)
 
     // Update slot status to Occupied
-    const slotIndex = mockSlots.findIndex((s) => s.id === data.slot_id)
+    const slotIndex = slots.findIndex((s) => s.id === data.slot_id)
     if (slotIndex !== -1) {
-      mockSlots[slotIndex].status = 'Occupied'
+      slots[slotIndex].status = 'Occupied'
     }
 
     return HttpResponse.json(newSession, { status: 201 })
@@ -67,11 +81,11 @@ export const handlers = [
 
   // Bookings endpoints
   http.get('/api/bookings', () => {
-    return HttpResponse.json(mockBookings)
+    return HttpResponse.json(bookings)
   }),
 
   http.post('/api/bookings', async ({ request }) => {
-    const data = await request.json() as any
+    const data = await request.json() as CreateBookingRequest
 
     // Calculate duration in hours
     const startTime = new Date(data.booking_start)
@@ -91,50 +105,50 @@ export const handlers = [
       created_at: new Date().toISOString(),
     }
 
-    mockBookings.push(newBooking)
+    bookings.push(newBooking)
 
     // Update slot status to Reserved
-    const slotIndex = mockSlots.findIndex((s) => s.id === data.slot_id)
+    const slotIndex = slots.findIndex((s) => s.id === data.slot_id)
     if (slotIndex !== -1) {
-      mockSlots[slotIndex].status = 'Reserved'
+      slots[slotIndex].status = 'Reserved'
     }
 
     return HttpResponse.json(newBooking, { status: 201 })
   }),
 
   http.patch('/api/bookings/:id', async ({ params, request }) => {
-    const updates = await request.json() as Record<string, any>
-    const bookingIndex = mockBookings.findIndex((b) => b.id === params.id)
+    const updates = await request.json() as UpdateBookingRequest
+    const bookingIndex = bookings.findIndex((b) => b.id === params.id)
     if (bookingIndex === -1) {
       return new HttpResponse(null, { status: 404 })
     }
-    mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates }
-    return HttpResponse.json(mockBookings[bookingIndex])
+    bookings[bookingIndex] = { ...bookings[bookingIndex], ...updates }
+    return HttpResponse.json(bookings[bookingIndex])
   }),
 
   // Exceptions endpoints
   http.get('/api/exceptions', () => {
-    return HttpResponse.json(mockExceptions)
+    return HttpResponse.json(exceptions)
   }),
 
   http.patch('/api/exceptions/:id/resolve', async ({ params, request }) => {
-    const { resolved_by } = await request.json() as any
-    const exceptionIndex = mockExceptions.findIndex((e) => e.id === params.id)
+    const { resolved_by } = await request.json() as ResolveExceptionRequest
+    const exceptionIndex = exceptions.findIndex((e) => e.id === params.id)
     if (exceptionIndex === -1) {
       return new HttpResponse(null, { status: 404 })
     }
-    mockExceptions[exceptionIndex] = {
-      ...mockExceptions[exceptionIndex],
+    exceptions[exceptionIndex] = {
+      ...exceptions[exceptionIndex],
       status: 'Resolved',
       resolved_by,
       resolved_at: new Date().toISOString(),
     }
-    return HttpResponse.json(mockExceptions[exceptionIndex])
+    return HttpResponse.json(exceptions[exceptionIndex])
   }),
 
   // Auth endpoints
   http.post('/api/auth/login', async ({ request }) => {
-    const { email, password } = await request.json() as any
+    const { email, password } = await request.json() as LoginRequest
 
     // Mock authentication
     const user = {

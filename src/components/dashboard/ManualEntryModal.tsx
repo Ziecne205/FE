@@ -65,14 +65,10 @@ export function ManualEntryModal({
   const selectedSlotId = watch('slot_id');
 
   const handleFormSubmit = async (data: ManualEntryFormData) => {
-    try {
-      await onSubmit(data);
-      toast.success('Tạo phiên đỗ xe thành công');
-      reset();
-      onClose();
-    } catch (error) {
-      toast.error('Không thể tạo phiên đỗ xe. Vui lòng thử lại.');
-    }
+    await onSubmit(data);
+    toast.success('Tạo phiên đỗ xe thành công');
+    reset();
+    onClose();
   };
 
   const handleClose = () => {

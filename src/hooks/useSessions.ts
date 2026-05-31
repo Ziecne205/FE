@@ -8,11 +8,13 @@ export function useSessions() {
     queryFn: async () => {
       const response = await fetch('/api/sessions')
       if (!response.ok) {
-        const error = new Error('Không thể tải danh sách phiên đỗ xe')
-        toast.error('Không thể tải danh sách phiên đỗ xe')
-        throw error
+        throw new Error('Không thể tải danh sách phiên đỗ xe')
       }
       return response.json() as Promise<ParkingSession[]>
+    },
+    throwOnError: (error) => {
+      toast.error('Không thể tải danh sách phiên đỗ xe')
+      return false
     },
   })
 }
@@ -23,11 +25,13 @@ export function useActiveSessions() {
     queryFn: async () => {
       const response = await fetch('/api/sessions/active')
       if (!response.ok) {
-        const error = new Error('Không thể tải phiên đỗ xe đang hoạt động')
-        toast.error('Không thể tải phiên đỗ xe đang hoạt động')
-        throw error
+        throw new Error('Không thể tải phiên đỗ xe đang hoạt động')
       }
       return response.json() as Promise<ParkingSession[]>
+    },
+    throwOnError: (error) => {
+      toast.error('Không thể tải phiên đỗ xe đang hoạt động')
+      return false
     },
   })
 }
