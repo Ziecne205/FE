@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
+  Gauge,
   Map,
   Car,
   Calendar,
@@ -25,6 +26,7 @@ interface SidebarProps {
 
 const managerNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
+  { href: '/capacity', icon: Gauge, label: 'Sức chứa' },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/bookings', icon: Calendar, label: 'Đặt chỗ' },

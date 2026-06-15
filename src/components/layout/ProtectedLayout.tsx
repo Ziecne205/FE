@@ -12,6 +12,7 @@ interface ProtectedLayoutProps {
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Tổng quan',
+  '/capacity': 'Bảng điều khiển Sức chứa',
   '/slots': 'Sơ đồ chỗ đỗ',
   '/sessions': 'Phiên đỗ xe',
   '/bookings': 'Quản lý đặt chỗ',

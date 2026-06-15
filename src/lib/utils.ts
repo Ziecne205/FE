@@ -109,6 +109,18 @@ export function getStatusColor(status: string): string {
     Cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
     Open: 'bg-red-100 text-red-800 border-red-200',
     Resolved: 'bg-green-100 text-green-800 border-green-200',
+    // Capacity-reservation model statuses
+    Admitted: 'bg-blue-100 text-blue-800 border-blue-200',
+    Parked: 'bg-green-100 text-green-800 border-green-200',
+    Moved: 'bg-amber-100 text-amber-800 border-amber-200',
+    Abandoned: 'bg-gray-100 text-gray-800 border-gray-200',
+    CheckedIn: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    Fulfilled: 'bg-green-100 text-green-800 border-green-200',
+    Expired: 'bg-gray-100 text-gray-800 border-gray-200',
+    InProgress: 'bg-amber-100 text-amber-800 border-amber-200',
+    Success: 'bg-green-100 text-green-800 border-green-200',
+    Failed: 'bg-red-100 text-red-800 border-red-200',
+    Refunded: 'bg-blue-100 text-blue-800 border-blue-200',
   };
 
   return statusColors[status] || 'bg-gray-100 text-gray-800 border-gray-200';

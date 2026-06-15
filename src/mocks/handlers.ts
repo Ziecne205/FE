@@ -3,6 +3,12 @@ import { mockSlots } from './data/slots'
 import { mockSessions } from './data/sessions'
 import { mockBookings } from './data/bookings'
 import { mockExceptions } from './data/exceptions'
+import {
+  PARKING_LOTS,
+  VEHICLE_TYPES,
+  generateSlots,
+  computeAvailability,
+} from './data/lots'
 import type {
   UpdateSlotRequest,
   CreateSessionRequest,
@@ -18,7 +24,53 @@ let sessions = structuredClone(mockSessions)
 let bookings = structuredClone(mockBookings)
 let exceptions = structuredClone(mockExceptions)
 
+// ── Capacity-reservation model state (new contract) ─────────────────────────────
+let slotsV2 = generateSlots('lot-1')
+
+interface MaintenanceRequest {
+  slotCodes: string[]
+  maintenance: boolean
+}
+
 export const handlers = [
+  // ── Capacity-reservation endpoints (APIs-List.md) ─────────────────────────────
+  http.get('/api/vehicle-types', () => HttpResponse.json(VEHICLE_TYPES)),
+
+  http.get('/api/parking-lots', () => HttpResponse.json(PARKING_LOTS)),
+
+  // Per-slot list for the visual map (flagged as an open question in the plan).
+  http.get('/api/parking-lots/:id/slots', ({ params }) =>
+    HttpResponse.json(slotsV2.filter((s) => s.parkingLotId === params.id))
+  ),
+
+  // Realtime availability / headroom — source of truth for "occupancy".
+  http.get('/api/parking-lots/:id/availability', ({ params }) =>
+    HttpResponse.json(computeAvailability(slotsV2, String(params.id)))
+  ),
+
+  // Manager maintenance toggle + capacity-crash warning.
+  http.post('/api/admin/slots/maintenance', async ({ request }) => {
+    const { slotCodes, maintenance } = (await request.json()) as MaintenanceRequest
+    slotsV2 = slotsV2.map((s) =>
+      slotCodes.includes(s.slotCode)
+        ? { ...s, status: maintenance ? 'Maintenance' : 'Available' }
+        : s
+    )
+    const availability = computeAvailability(slotsV2)
+    const crashed = availability.byVehicleType.filter((t) => t.walkInHeadroom < 0)
+    return HttpResponse.json({
+      success: true,
+      availability,
+      warning: crashed.length
+        ? {
+            errorCode: 'CAPACITY_CRASH',
+            message: 'Thao tác làm sức chứa tụt dưới số xe đang giữ — vãng lai bị chặn 100%.',
+            affectedTypes: crashed.map((t) => t.vehicleTypeName),
+          }
+        : null,
+    })
+  }),
+
   // Slots endpoints
   http.get('/api/slots', () => {
     return HttpResponse.json(slots)
