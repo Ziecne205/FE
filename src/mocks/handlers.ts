@@ -9,6 +9,7 @@ import {
   generateSlots,
   computeAvailability,
 } from './data/lots'
+import { mockIncidents } from './data/incidents'
 import type {
   UpdateSlotRequest,
   CreateSessionRequest,
@@ -26,10 +27,16 @@ let exceptions = structuredClone(mockExceptions)
 
 // ── Capacity-reservation model state (new contract) ─────────────────────────────
 let slotsV2 = generateSlots('lot-1')
+let incidentsV2 = structuredClone(mockIncidents)
 
 interface MaintenanceRequest {
   slotCodes: string[]
   maintenance: boolean
+}
+
+interface ResolveIncidentRequest {
+  handledByStaffId?: string
+  resolutionNotes?: string
 }
 
 export const handlers = [
@@ -69,6 +76,36 @@ export const handlers = [
           }
         : null,
     })
+  }),
+
+  // Incidents — list (status/lot filter) + resolve.
+  http.get('/api/incidents', ({ request }) => {
+    const url = new URL(request.url)
+    const status = url.searchParams.get('status')
+    const lotId = url.searchParams.get('lotId')
+    let result = incidentsV2
+    if (lotId) result = result.filter((i) => i.parkingLotId === lotId)
+    if (status && status !== 'all') result = result.filter((i) => i.status === status)
+    return HttpResponse.json(result)
+  }),
+
+  http.put('/api/incidents/:id/resolve', async ({ params, request }) => {
+    const body = (await request.json()) as ResolveIncidentRequest
+    const idx = incidentsV2.findIndex((i) => i.incidentId === params.id)
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy sự cố', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+    incidentsV2[idx] = {
+      ...incidentsV2[idx],
+      status: 'Resolved',
+      handledByStaffId: body.handledByStaffId ?? incidentsV2[idx].handledByStaffId,
+      resolutionNotes: body.resolutionNotes,
+      resolveAt: new Date().toISOString(),
+    }
+    return HttpResponse.json(incidentsV2[idx])
   }),
 
   // Slots endpoints

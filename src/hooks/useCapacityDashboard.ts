@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import type { VehicleTypeAvailability } from '@/types/model';
 import type { CapacityKpiData } from '@/components/capacity-dashboard/types';
-import { useAvailability, useParkingLots } from '@/hooks/useAvailability';
+import { useAvailability, useParkingLots } from '@/hooks/useAvailability'
+import { useOpenIncidentCount } from '@/hooks/useIncidents';
 
 interface UseCapacityDashboardReturn {
   lotName: string;
@@ -43,10 +44,10 @@ export function useCapacityDashboard(initialLotId?: string): UseCapacityDashboar
 
   const effectiveLotId = selectedLotId ?? lots?.[0]?.id;
   const { data: availability, refetch, isFetching, dataUpdatedAt } = useAvailability(effectiveLotId);
+  const { data: openIncidents = 0 } = useOpenIncidentCount(effectiveLotId);
 
   const vehicleTypes = availability?.byVehicleType ?? [];
-  // TODO(incidents slice): replace 0 with the open-incident count for this lot.
-  const kpi = useMemo(() => computeKpi(vehicleTypes, 0), [vehicleTypes]);
+  const kpi = useMemo(() => computeKpi(vehicleTypes, openIncidents), [vehicleTypes, openIncidents]);
   const warningMessage = useMemo(() => computeWarning(vehicleTypes), [vehicleTypes]);
 
   const lotOptions = lots?.map((l) => l.name) ?? [];
