@@ -28,7 +28,7 @@ export function DashboardLayout({
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar
-        userRole={user.role as 'Manager' | 'Staff'}
+        userRole={user.role}
         onNewEntry={onNewEntry}
         onLogout={onLogout}
       />

@@ -3,18 +3,19 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store'
+import { roleHome } from '@/lib/roles'
 
 export default function Home() {
   const router = useRouter()
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const { isAuthenticated, user } = useAuthStore()
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard')
+    if (isAuthenticated && user) {
+      router.replace(roleHome[user.role])
     } else {
-      router.push('/login')
+      router.replace('/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user, router])
 
   return (
     <main className="flex min-h-screen items-center justify-center">

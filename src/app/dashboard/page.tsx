@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedLayout>
-      {user?.role === 'Manager' ? (
+      {user?.role === 'Manager' || user?.role === 'Admin' ? (
         <ManagerDashboard stats={stats} onRefresh={() => refetch()} />
       ) : (
         <>

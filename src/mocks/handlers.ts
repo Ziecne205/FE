@@ -408,6 +408,67 @@ export const handlers = [
     return HttpResponse.json(newSession, { status: 201 })
   }),
 
+  // Payments — POST /api/payments (paymentType:'Parking')
+  http.post('/api/payments', async ({ request }) => {
+    const body = await request.json() as {
+      paymentType: string
+      sessionId: string
+      paymentMethod: string
+      amount?: number
+    }
+
+    const idx = sessionsV2.findIndex((s) => s.sessionId === body.sessionId)
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy phiên', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+
+    const session = sessionsV2[idx]
+    const DAY_RATE = 10_000
+    const NIGHT_RATE = 15_000
+    const SURCHARGE = 5_000
+
+    let fee = session.totalFee
+    if (fee == null) {
+      const totalMinutes = Math.max(
+        0,
+        Math.floor((Date.now() - new Date(session.entryTime).getTime()) / 60_000),
+      )
+      const totalHours = Math.ceil(totalMinutes / 60)
+      let dayH = 0, nightH = 0
+      for (let i = 0; i < totalHours; i++) {
+        const h = new Date(new Date(session.entryTime).getTime() + i * 3_600_000).getHours()
+        if (h >= 6 && h < 18) dayH++
+        else nightH++
+      }
+      fee = dayH * DAY_RATE + nightH * NIGHT_RATE + SURCHARGE
+    }
+
+    sessionsV2[idx] = {
+      ...session,
+      status: 'Completed',
+      isPaid: true,
+      exitTime: new Date().toISOString(),
+      totalFee: fee,
+    }
+
+    // Decrement inside: mark corresponding slot Available if found
+    slotsV2 = slotsV2.map((s) =>
+      s.slotCode === session.actualSlotCode && s.status === 'Occupied'
+        ? { ...s, status: 'Available' as const }
+        : s,
+    )
+
+    return HttpResponse.json({
+      success: true,
+      paymentId: `PAY-${Date.now()}`,
+      status: 'Success',
+      barrierOpen: true,
+    })
+  }),
+
   // Auth endpoints
   http.post('/api/auth/login', async ({ request }) => {
     const { email, password } = await request.json() as LoginRequest

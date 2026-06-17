@@ -15,12 +15,14 @@ import {
   LogOut,
   Plus,
   Sliders,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import type { UserRole } from '@/types';
 
 interface SidebarProps {
-  userRole: 'Manager' | 'Staff';
+  userRole: UserRole;
   onNewEntry?: () => void;
   onLogout?: () => void;
 }
@@ -41,12 +43,14 @@ const staffNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
+  { href: '/exit-payment', icon: CreditCard, label: 'Thanh toán' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 
 export function Sidebar({ userRole, onNewEntry, onLogout }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = userRole === 'Manager' ? managerNavItems : staffNavItems;
+  // Staff get the operational nav; Manager and Admin (superset) get the full manager nav.
+  const navItems = userRole === 'Staff' ? staffNavItems : managerNavItems;
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 h-full flex-col p-4 z-40 w-[280px] bg-gray-50 border-r border-gray-200">

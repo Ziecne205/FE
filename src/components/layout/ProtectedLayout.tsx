@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store'
 import { DashboardLayout as BaseDashboardLayout } from '@/components/layout/DashboardLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { canAccess, roleHome } from '@/lib/roles'
 
 interface ProtectedLayoutProps {
   children: ReactNode
@@ -19,7 +20,9 @@ const routeTitles: Record<string, string> = {
   '/incidents': 'Sự cố',
   '/exceptions': 'Xử lý ngoại lệ',
   '/occupancy': 'Lưu lượng bãi xe',
+  '/quota': 'Hạn mức đặt chỗ',
   '/reports': 'Báo cáo',
+  '/exit-payment': 'Thanh toán cổng ra',
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
@@ -27,14 +30,19 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthStore()
 
+  const allowed = !!user && canAccess(user.role, pathname)
+
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login')
+      router.replace('/login')
+    } else if (user && !canAccess(user.role, pathname)) {
+      // Authenticated but wrong role for this route → send to the role's home.
+      router.replace(roleHome[user.role])
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user, pathname, router])
 
-  // Show loading while checking auth or if not authenticated
-  if (!isAuthenticated || !user) {
+  // Show loading while checking auth, if not authenticated, or while redirecting a disallowed role.
+  if (!isAuthenticated || !user || !allowed) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
