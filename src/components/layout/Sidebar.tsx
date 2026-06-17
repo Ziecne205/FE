@@ -10,10 +10,11 @@ import {
   Calendar,
   AlertTriangle,
   BarChart3,
-  Settings,
+  TrendingUp,
   HelpCircle,
   LogOut,
   Plus,
+  Sliders,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,8 @@ const managerNavItems = [
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/bookings', icon: Calendar, label: 'Đặt chỗ' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
+  { href: '/occupancy', icon: TrendingUp, label: 'Lưu lượng' },
+  { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
 ];
 

@@ -9,7 +9,8 @@ import {
 } from './data/lots'
 import { mockIncidents } from './data/incidents'
 import { mockReservations } from './data/reservations'
-import type { Reservation, ReservationStatus } from '@/types/model'
+import { mockQuotas } from './data/quotas'
+import type { BookingQuota, Reservation, ReservationStatus } from '@/types/model'
 import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest } from './types'
 
 // Create deep clones to avoid mutation.
@@ -22,9 +23,29 @@ let sessions = structuredClone(mockSessions)
 let slotsV2 = generateSlots('lot-1')
 let incidentsV2 = structuredClone(mockIncidents)
 let reservationsV2 = structuredClone(mockReservations)
+let quotasV2: BookingQuota[] = structuredClone(mockQuotas)
 
-const QUOTA_PERCENT = 0.2 // booking quota as % of capacity (per vehicle type)
 const ACTIVE_RES_STATUSES: ReservationStatus[] = ['Pending', 'Confirmed', 'CheckedIn']
+
+/** Find the active quota % for a vehicle type + time window. Falls back to 20% if none defined. */
+function resolveQuotaPercent(
+  vehicleTypeId: string,
+  entryTime: string,
+  lotId: string,
+): number {
+  // Parse entry time as HH:mm for window matching
+  const entryDate = new Date(entryTime)
+  const hhmm = `${entryDate.getHours().toString().padStart(2, '0')}:${entryDate.getMinutes().toString().padStart(2, '0')}`
+  const match = quotasV2.find(
+    (q) =>
+      q.parkingLotId === lotId &&
+      q.vehicleTypeId === vehicleTypeId &&
+      q.isActive &&
+      hhmm >= q.windowStart &&
+      hhmm < q.windowEnd,
+  )
+  return match ? match.quotaPercent / 100 : 0.2
+}
 
 interface MaintenanceRequest {
   slotCodes: string[]
@@ -129,11 +150,16 @@ export const handlers = [
   http.post('/api/reservations', async ({ request }) => {
     const body = (await request.json()) as CreateReservationRequest
 
-    // Quota check (§5): quotaAbs = ceil(QUOTA_PERCENT * C(type)); a Manager may override.
+    // Quota check: quotaAbs = ceil(resolvedPercent * C(type)); a Manager may override.
     const capacity = slotsV2.filter(
       (s) => s.vehicleTypeId === body.vehicleTypeId && s.status !== 'Maintenance',
     ).length
-    const quotaAbs = Math.ceil(QUOTA_PERCENT * capacity)
+    const quotaPercent = resolveQuotaPercent(
+      body.vehicleTypeId,
+      body.expectedEntryTime,
+      body.parkingLotId,
+    )
+    const quotaAbs = Math.ceil(quotaPercent * capacity)
     const activeCount = reservationsV2.filter(
       (r) => r.vehicleTypeId === body.vehicleTypeId && ACTIVE_RES_STATUSES.includes(r.status),
     ).length
@@ -190,6 +216,63 @@ export const handlers = [
     }
     reservationsV2[idx] = { ...reservationsV2[idx], status: 'Cancelled' }
     return HttpResponse.json({ success: true, status: 'Cancelled' })
+  }),
+
+  // Quotas — GET list, POST create, PUT update.
+  http.get('/api/admin/quotas', ({ request }) => {
+    const url = new URL(request.url)
+    const lotId = url.searchParams.get('lotId')
+    const result = lotId ? quotasV2.filter((q) => q.parkingLotId === lotId) : quotasV2
+    return HttpResponse.json(result)
+  }),
+
+  http.post('/api/admin/quotas', async ({ request }) => {
+    const body = (await request.json()) as Omit<BookingQuota, 'quotaId'>
+    if (body.quotaPercent < 0 || body.quotaPercent > 100) {
+      return HttpResponse.json(
+        { success: false, message: 'quotaPercent phải trong khoảng 0–100', errorCode: 'INVALID_INPUT' },
+        { status: 422 },
+      )
+    }
+    const quota: BookingQuota = { ...body, quotaId: `quota-${Date.now()}` }
+    quotasV2.push(quota)
+    return HttpResponse.json(quota, { status: 201 })
+  }),
+
+  http.put('/api/admin/quotas/:id', async ({ params, request }) => {
+    const body = (await request.json()) as Partial<BookingQuota>
+    if (body.quotaPercent !== undefined && (body.quotaPercent < 0 || body.quotaPercent > 100)) {
+      return HttpResponse.json(
+        { success: false, message: 'quotaPercent phải trong khoảng 0–100', errorCode: 'INVALID_INPUT' },
+        { status: 422 },
+      )
+    }
+    const idx = quotasV2.findIndex((q) => q.quotaId === params.id)
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy hạn mức', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+    quotasV2[idx] = { ...quotasV2[idx], ...body, quotaId: quotasV2[idx].quotaId }
+    return HttpResponse.json(quotasV2[idx])
+  }),
+
+  // Occupancy flow — daily entry/exit/inside per 2-hour window.
+  // inside[i] = inside[i-1] + entries[i] - exits[i]; curve is low→peak→fall.
+  http.get('/api/admin/lots/:id/occupancy', () => {
+    const windows = [
+      { windowStart: '06:00', windowEnd: '08:00', entries: 12,  exits: 2,   inside: 10  },
+      { windowStart: '08:00', windowEnd: '10:00', entries: 58,  exits: 8,   inside: 60  },
+      { windowStart: '10:00', windowEnd: '12:00', entries: 34,  exits: 22,  inside: 72  },
+      { windowStart: '12:00', windowEnd: '14:00', entries: 20,  exits: 38,  inside: 54  },
+      { windowStart: '14:00', windowEnd: '16:00', entries: 42,  exits: 15,  inside: 81  },
+      { windowStart: '16:00', windowEnd: '18:00', entries: 65,  exits: 20,  inside: 126 },
+      { windowStart: '18:00', windowEnd: '20:00', entries: 30,  exits: 55,  inside: 101 },
+      { windowStart: '20:00', windowEnd: '22:00', entries: 10,  exits: 60,  inside: 51  },
+      { windowStart: '22:00', windowEnd: '00:00', entries: 5,   exits: 40,  inside: 16  },
+    ]
+    return HttpResponse.json(windows)
   }),
 
   // Slots endpoints
