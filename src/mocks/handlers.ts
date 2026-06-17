@@ -258,6 +258,50 @@ export const handlers = [
     return HttpResponse.json(quotasV2[idx])
   }),
 
+  // Reports — revenue + occupancy series for a date range.
+  // Pricing: 10k/session 06–18h, 15k/session 18–06h; sessions vary by day-of-week.
+  http.get('/api/admin/lots/:id/reports', ({ request }) => {
+    const url = new URL(request.url)
+    const from = url.searchParams.get('from') ?? '2026-06-11'
+    const to   = url.searchParams.get('to')   ?? '2026-06-17'
+
+    const occupancyWindows = [
+      { windowStart: '06:00', windowEnd: '08:00', entries: 12,  exits: 2,   inside: 10  },
+      { windowStart: '08:00', windowEnd: '10:00', entries: 58,  exits: 8,   inside: 60  },
+      { windowStart: '10:00', windowEnd: '12:00', entries: 34,  exits: 22,  inside: 72  },
+      { windowStart: '12:00', windowEnd: '14:00', entries: 20,  exits: 38,  inside: 54  },
+      { windowStart: '14:00', windowEnd: '16:00', entries: 42,  exits: 15,  inside: 81  },
+      { windowStart: '16:00', windowEnd: '18:00', entries: 65,  exits: 20,  inside: 126 },
+      { windowStart: '18:00', windowEnd: '20:00', entries: 30,  exits: 55,  inside: 101 },
+      { windowStart: '20:00', windowEnd: '22:00', entries: 10,  exits: 60,  inside: 51  },
+      { windowStart: '22:00', windowEnd: '00:00', entries: 5,   exits: 40,  inside: 16  },
+    ]
+
+    // Generate one RevenuePoint per day in [from, to].
+    const revenue = []
+    const cursor = new Date(from)
+    const end = new Date(to)
+    const BASE_SESSIONS = [41, 58, 74, 89, 102, 95, 71] // Mon–Sun profile
+    while (cursor <= end) {
+      const dow = cursor.getDay() // 0=Sun
+      const sessions = BASE_SESSIONS[dow] + Math.round((Math.random() - 0.5) * 8)
+      // day sessions (06–18h) ~60%, night (18–06h) ~40%
+      const dayS  = Math.round(sessions * 0.6)
+      const nightS = sessions - dayS
+      const rev = dayS * 10_000 + nightS * 15_000
+      const occupancyRate = Math.min(99, Math.round(40 + sessions * 0.55))
+      revenue.push({
+        date: cursor.toISOString().slice(0, 10),
+        revenue: rev,
+        sessions,
+        occupancyRate,
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+
+    return HttpResponse.json({ revenue, occupancy: occupancyWindows })
+  }),
+
   // Occupancy flow — daily entry/exit/inside per 2-hour window.
   // inside[i] = inside[i-1] + entries[i] - exits[i]; curve is low→peak→fall.
   http.get('/api/admin/lots/:id/occupancy', () => {

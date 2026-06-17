@@ -1,12 +1,20 @@
-import type { OccupancyWindow } from '@/types/model';
-import { MOCK_OCCUPANCY } from '@/components/occupancy-dashboard/mockData';
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import type { OccupancyWindow } from '@/types/model'
 
 export interface DateRange { from: string; to: string }
 
 export function useOccupancy(
-  _lotId: string | undefined,
-  _range: DateRange,
+  lotId: string | undefined,
+  range: DateRange,
 ): { data: OccupancyWindow[]; isLoading: boolean } {
-  // TODO(opus): replace with GET /api/admin/lots/{id}/occupancy?from=&to= via api.get + React Query
-  return { data: MOCK_OCCUPANCY, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ['occupancy', lotId, range.from, range.to],
+    queryFn: () =>
+      api.get<OccupancyWindow[]>(
+        `/admin/lots/${lotId}/occupancy?from=${range.from}&to=${range.to}`,
+      ),
+    enabled: !!lotId,
+  })
+  return { data: data ?? [], isLoading }
 }

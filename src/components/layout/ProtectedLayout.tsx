@@ -18,6 +18,7 @@ const routeTitles: Record<string, string> = {
   '/bookings': 'Quản lý đặt chỗ',
   '/incidents': 'Sự cố',
   '/exceptions': 'Xử lý ngoại lệ',
+  '/occupancy': 'Lưu lượng bãi xe',
   '/reports': 'Báo cáo',
 }
 
