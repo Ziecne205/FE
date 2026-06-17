@@ -10,7 +10,8 @@ import {
 import { mockIncidents } from './data/incidents'
 import { mockReservations } from './data/reservations'
 import { mockQuotas } from './data/quotas'
-import type { BookingQuota, Reservation, ReservationStatus } from '@/types/model'
+import { MOCK_SESSIONS } from '@/components/active-sessions/mockData'
+import type { BookingQuota, ParkingSession, Reservation, ReservationStatus } from '@/types/model'
 import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest } from './types'
 
 // Create deep clones to avoid mutation.
@@ -24,6 +25,9 @@ let slotsV2 = generateSlots('lot-1')
 let incidentsV2 = structuredClone(mockIncidents)
 let reservationsV2 = structuredClone(mockReservations)
 let quotasV2: BookingQuota[] = structuredClone(mockQuotas)
+
+// sessionsV2 — gate-camera-simulator store (seeded from component mockData)
+let sessionsV2: ParkingSession[] = structuredClone(MOCK_SESSIONS)
 
 const ACTIVE_RES_STATUSES: ReservationStatus[] = ['Pending', 'Confirmed', 'CheckedIn']
 
@@ -68,6 +72,40 @@ interface CreateReservationRequest {
 }
 
 export const handlers = [
+  // ── Sessions V2 (capacity-reservation model) ──────────────────────────────────
+  http.get('/api/sessions', ({ request }) => {
+    const url = new URL(request.url)
+    const lotId = url.searchParams.get('lotId')
+    const open = url.searchParams.get('open')
+    // New-contract request: has open= param
+    if (open === 'true') {
+      const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
+      let result = sessionsV2.filter((s) => OPEN_STATUSES.includes(s.status))
+      if (lotId) result = result.filter((s) => s.parkingLotId === lotId)
+      return HttpResponse.json(result)
+    }
+    // Legacy fallback
+    return HttpResponse.json(sessions)
+  }),
+
+  http.get('/api/sessions/find', ({ request }) => {
+    const url = new URL(request.url)
+    const plate = url.searchParams.get('plate') ?? ''
+    const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
+    const match = sessionsV2.find(
+      (s) =>
+        OPEN_STATUSES.includes(s.status) &&
+        s.licensePlate.toLowerCase().includes(plate.toLowerCase()),
+    )
+    if (!match) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy xe', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+    return HttpResponse.json(match)
+  }),
+
   // ── Capacity-reservation endpoints (APIs-List.md) ─────────────────────────────
   http.get('/api/vehicle-types', () => HttpResponse.json(VEHICLE_TYPES)),
 
@@ -342,16 +380,7 @@ export const handlers = [
     return HttpResponse.json(slots[slotIndex])
   }),
 
-  // Sessions endpoints
-  http.get('/api/sessions', () => {
-    return HttpResponse.json(sessions)
-  }),
-
-  http.get('/api/sessions/active', () => {
-    const activeSessions = sessions.filter((s) => s.status === 'Active')
-    return HttpResponse.json(activeSessions)
-  }),
-
+  // Legacy session POST (dashboard manual-entry still uses this)
   http.post('/api/sessions', async ({ request }) => {
     const data = await request.json() as CreateSessionRequest
 
