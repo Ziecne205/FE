@@ -40,3 +40,5 @@ next-env.d.ts
 # project specific (planning / delegation / Stitch artifacts — kept local, not committed)
 agents/
 scripts/
+.claude/
+.stitch/
