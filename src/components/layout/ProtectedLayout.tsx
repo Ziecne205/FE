@@ -23,6 +23,7 @@ const routeTitles: Record<string, string> = {
   '/quota': 'Hạn mức đặt chỗ',
   '/reports': 'Báo cáo',
   '/exit-payment': 'Thanh toán cổng ra',
+  '/simulator': 'Mô phỏng Cổng & Camera',
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {

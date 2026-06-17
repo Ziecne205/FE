@@ -16,6 +16,7 @@ import {
   Plus,
   Sliders,
   CreditCard,
+  Cctv,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ const staffNavItems = [
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/exit-payment', icon: CreditCard, label: 'Thanh toán' },
+  { href: '/simulator', icon: Cctv, label: 'Mô phỏng Cổng' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 

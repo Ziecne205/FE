@@ -11,7 +11,13 @@ import { mockIncidents } from './data/incidents'
 import { mockReservations } from './data/reservations'
 import { mockQuotas } from './data/quotas'
 import { MOCK_SESSIONS } from '@/components/active-sessions/mockData'
-import type { BookingQuota, ParkingSession, Reservation, ReservationStatus } from '@/types/model'
+import type {
+  BookingQuota,
+  Incident,
+  ParkingSession,
+  Reservation,
+  ReservationStatus,
+} from '@/types/model'
 import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest } from './types'
 
 // Create deep clones to avoid mutation.
@@ -492,5 +498,263 @@ export const handlers = [
 
   http.post('/api/auth/logout', () => {
     return HttpResponse.json({ success: true })
+  }),
+
+  // ── Gate / Camera simulator endpoints ─────────────────────────────────────────
+
+  http.post('/api/gate/entry/scan', async ({ request }) => {
+    const body = (await request.json()) as {
+      licensePlate: string
+      failureRate?: number
+      forceFailure?: string
+    }
+    const { licensePlate, failureRate = 0, forceFailure } = body
+
+    // Scan failure
+    if (forceFailure === 'SCAN_FAILED' || Math.random() * 100 < failureRate) {
+      return HttpResponse.json({
+        admitted: false,
+        reason: 'SCAN_FAILED',
+        message: 'Không nhận diện được biển số. Vui lòng nhập tay.',
+      })
+    }
+
+    // Lot full check
+    const availability = computeAvailability(slotsV2)
+    const totalHeadroom = availability.byVehicleType.reduce(
+      (sum, vt) => sum + vt.walkInHeadroom,
+      0,
+    )
+    if (forceFailure === 'FULL' || totalHeadroom <= 0) {
+      return HttpResponse.json({
+        admitted: false,
+        reason: 'FULL',
+        message: 'Bãi xe đã đầy. Không thể tiếp nhận xe mới.',
+      })
+    }
+
+    // Check for matching confirmed reservation
+    const resIdx = reservationsV2.findIndex(
+      (r) =>
+        r.licensePlate.toLowerCase() === licensePlate.toLowerCase() &&
+        r.status === 'Confirmed',
+    )
+    const reservationMatched = resIdx !== -1
+    if (reservationMatched) {
+      reservationsV2[resIdx] = { ...reservationsV2[resIdx], status: 'CheckedIn' }
+    }
+
+    // Pick an advisory available slot
+    const availableSlot = slotsV2.find((s) => s.status === 'Available')
+    const suggestedSlotCode = availableSlot?.slotCode
+
+    // Create new session
+    const sessionId = `sess-${Date.now()}`
+    const newSession: ParkingSession = {
+      sessionId,
+      reservationId: reservationMatched ? reservationsV2[resIdx].reservationId : null,
+      parkingLotId: 'lot-1',
+      vehicleTypeId: 'vt-car',
+      licensePlate,
+      assignedSlotCode: suggestedSlotCode,
+      entryTime: new Date().toISOString(),
+      isPaid: false,
+      status: 'Admitted',
+    }
+    sessionsV2.push(newSession)
+
+    // Mark the advisory slot occupied so next entry gets a different suggestion
+    if (availableSlot) {
+      slotsV2 = slotsV2.map((s) =>
+        s.slotCode === availableSlot.slotCode ? { ...s, status: 'Occupied' as const } : s,
+      )
+    }
+
+    return HttpResponse.json({
+      admitted: true,
+      sessionId,
+      reservationMatched,
+      suggestedSlotCode,
+      message: `Xe vào thành công.${suggestedSlotCode ? ` Chỗ đỗ gợi ý: ${suggestedSlotCode}` : ''}`,
+    })
+  }),
+
+  http.post('/api/gate/exit/scan', async ({ request }) => {
+    const body = (await request.json()) as {
+      licensePlate: string
+      failureRate?: number
+    }
+    const { licensePlate, failureRate = 0 } = body
+
+    // Scan failure → 500
+    if (Math.random() * 100 < failureRate) {
+      return HttpResponse.json(
+        { success: false, message: 'Lỗi quét biển số cổng ra.', errorCode: 'SCAN_ERROR' },
+        { status: 500 },
+      )
+    }
+
+    // Find active session
+    const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
+    const session = sessionsV2.find(
+      (s) =>
+        OPEN_STATUSES.includes(s.status) &&
+        s.licensePlate.toLowerCase() === licensePlate.toLowerCase(),
+    )
+    if (!session) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy xe trong bãi.', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+
+    const entryTime = new Date(session.entryTime)
+    const now = new Date()
+    const totalMs = now.getTime() - entryTime.getTime()
+    const totalHours = Math.max(1, Math.ceil(totalMs / 3_600_000))
+
+    // Day/night fee: 10,000 VND/hour 06:00–18:00, 15,000 VND/hour 18:00–06:00
+    let dayH = 0
+    let nightH = 0
+    for (let i = 0; i < totalHours; i++) {
+      const h = new Date(entryTime.getTime() + i * 3_600_000).getHours()
+      if (h >= 6 && h < 18) dayH++
+      else nightH++
+    }
+    const totalFee = dayH * 10_000 + nightH * 15_000
+    const durationHours = Math.round((totalMs / 3_600_000) * 100) / 100
+
+    return HttpResponse.json({
+      sessionId: session.sessionId,
+      licensePlate: session.licensePlate,
+      entryTime: session.entryTime,
+      durationHours,
+      totalFee,
+      isPaid: false,
+      paymentMethods: ['Cash', 'QR'],
+    })
+  }),
+
+  http.post('/api/gate/force-checkin', async ({ request }) => {
+    const body = (await request.json()) as { licensePlate: string }
+    const { licensePlate } = body
+
+    // Find any reservation for this plate and update it
+    const resIdx = reservationsV2.findIndex(
+      (r) => r.licensePlate.toLowerCase() === licensePlate.toLowerCase(),
+    )
+    if (resIdx !== -1) {
+      reservationsV2[resIdx] = {
+        ...reservationsV2[resIdx],
+        licensePlate,
+        status: 'CheckedIn',
+      }
+    }
+
+    // Create session
+    const sessionId = `sess-force-${Date.now()}`
+    const newSession: ParkingSession = {
+      sessionId,
+      reservationId: resIdx !== -1 ? reservationsV2[resIdx].reservationId : null,
+      parkingLotId: 'lot-1',
+      vehicleTypeId: 'vt-car',
+      licensePlate,
+      entryTime: new Date().toISOString(),
+      isPaid: false,
+      status: 'Admitted',
+    }
+    sessionsV2.push(newSession)
+
+    // Log MANUAL_OVERRIDE incident
+    const incident: Incident = {
+      incidentId: `inc-force-${Date.now()}`,
+      parkingLotId: 'lot-1',
+      issueType: 'MANUAL_OVERRIDE',
+      sessionId,
+      description: `Force check-in cho biển số ${licensePlate} bởi nhân viên.`,
+      createdAt: new Date().toISOString(),
+      status: 'Open',
+    }
+    incidentsV2.push(incident)
+
+    return HttpResponse.json({
+      admitted: true,
+      sessionId,
+      message: `Force check-in thành công cho xe ${licensePlate}.`,
+    })
+  }),
+
+  http.post('/api/camera/slot-occupied', async ({ request }) => {
+    const body = (await request.json()) as {
+      slotCode: string
+      licensePlate?: string
+    }
+    const { slotCode, licensePlate } = body
+
+    const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
+
+    // Find matching session by licensePlate first, then by assignedSlotCode
+    const sessIdx = sessionsV2.findIndex((s) => {
+      if (!OPEN_STATUSES.includes(s.status)) return false
+      if (licensePlate && s.licensePlate.toLowerCase() === licensePlate.toLowerCase()) return true
+      if (s.assignedSlotCode === slotCode) return true
+      return false
+    })
+
+    let matched = sessIdx !== -1
+    if (matched) {
+      sessionsV2[sessIdx] = {
+        ...sessionsV2[sessIdx],
+        status: 'Parked',
+        actualSlotCode: slotCode,
+        parkedTime: new Date().toISOString(),
+      }
+    } else {
+      // No matching session — create UNMAPPED_OCCUPANCY incident
+      const incident: Incident = {
+        incidentId: `inc-unmap-${Date.now()}`,
+        parkingLotId: 'lot-1',
+        issueType: 'UNMAPPED_OCCUPANCY',
+        slotCode,
+        description: `Camera phát hiện xe tại ${slotCode} không khớp phiên nào.${licensePlate ? ` Biển số: ${licensePlate}` : ''}`,
+        createdAt: new Date().toISOString(),
+        status: 'Open',
+      }
+      incidentsV2.push(incident)
+    }
+
+    // Update slot status
+    slotsV2 = slotsV2.map((s) =>
+      s.slotCode === slotCode ? { ...s, status: 'Occupied' as const } : s,
+    )
+
+    return HttpResponse.json({ matched, slotStatus: 'Occupied' })
+  }),
+
+  http.post('/api/camera/slot-vacated', async ({ request }) => {
+    const body = (await request.json()) as { slotCode: string }
+    const { slotCode } = body
+
+    // Find session occupying this slot
+    const sessIdx = sessionsV2.findIndex(
+      (s) => s.actualSlotCode === slotCode && ['Parked', 'Admitted', 'Moved'].includes(s.status),
+    )
+    const matched = sessIdx !== -1
+    if (matched) {
+      sessionsV2[sessIdx] = {
+        ...sessionsV2[sessIdx],
+        status: 'Moved',
+        movedTime: new Date().toISOString(),
+      }
+    }
+
+    // Free the slot
+    slotsV2 = slotsV2.map((s) =>
+      s.slotCode === slotCode && s.status === 'Occupied'
+        ? { ...s, status: 'Available' as const }
+        : s,
+    )
+
+    return HttpResponse.json({ matched, slotStatus: 'Available' })
   }),
 ]

@@ -1,71 +1,73 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api'
 import type {
   EntryScanResult,
   ExitScanResult,
   ForceCheckinResult,
   CameraSlotResult,
 } from '@/components/gate-camera-simulator/types'
-import {
-  CANNED_ENTRY_SUCCESS,
-  CANNED_ENTRY_SCAN_FAILED,
-  CANNED_ENTRY_MISMATCH,
-  CANNED_ENTRY_FULL,
-  CANNED_EXIT_SUCCESS,
-  CANNED_FORCE_CHECKIN,
-} from '@/components/gate-camera-simulator/mockData'
 
-// TODO(opus): POST /api/gate/entry/scan
+// POST /api/gate/entry/scan
 export function useEntryScan(failureRate: number) {
+  const queryClient = useQueryClient()
   return useMutation<EntryScanResult, Error, { licensePlate: string }>({
-    mutationFn: async ({ licensePlate: _licensePlate }) => {
-      await new Promise((r) => setTimeout(r, 600))
-      const roll = Math.random() * 100
-      if (roll < failureRate) return CANNED_ENTRY_SCAN_FAILED
-      if (roll < failureRate + 10) return CANNED_ENTRY_MISMATCH
-      if (roll < failureRate + 15) return CANNED_ENTRY_FULL
-      return CANNED_ENTRY_SUCCESS
+    mutationFn: ({ licensePlate }) =>
+      api.post<EntryScanResult>('/gate/entry/scan', { licensePlate, failureRate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['availability'] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
   })
 }
 
-// TODO(opus): POST /api/gate/exit/scan
+// POST /api/gate/exit/scan
 export function useExitScan(failureRate: number) {
+  const queryClient = useQueryClient()
   return useMutation<ExitScanResult, Error, { licensePlate: string }>({
-    mutationFn: async ({ licensePlate: _licensePlate }) => {
-      await new Promise((r) => setTimeout(r, 600))
-      const roll = Math.random() * 100
-      if (roll < failureRate) throw new Error('Quét biển số cổng ra thất bại.')
-      return CANNED_EXIT_SUCCESS
+    mutationFn: ({ licensePlate }) =>
+      api.post<ExitScanResult>('/gate/exit/scan', { licensePlate, failureRate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
   })
 }
 
-// TODO(opus): POST /api/gate/force-checkin
+// POST /api/gate/force-checkin
 export function useForceCheckin() {
+  const queryClient = useQueryClient()
   return useMutation<ForceCheckinResult, Error, { licensePlate: string }>({
-    mutationFn: async ({ licensePlate: _licensePlate }) => {
-      await new Promise((r) => setTimeout(r, 800))
-      return CANNED_FORCE_CHECKIN
+    mutationFn: ({ licensePlate }) =>
+      api.post<ForceCheckinResult>('/gate/force-checkin', { licensePlate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
     },
   })
 }
 
-// TODO(opus): POST /api/camera/slot-occupied
+// POST /api/camera/slot-occupied
 export function useCameraOccupied() {
-  return useMutation<CameraSlotResult, Error, { slotCode: string }>({
-    mutationFn: async ({ slotCode: _slotCode }) => {
-      await new Promise((r) => setTimeout(r, 400))
-      return { matched: true, slotStatus: 'Occupied' }
+  const queryClient = useQueryClient()
+  return useMutation<CameraSlotResult, Error, { slotCode: string; licensePlate?: string }>({
+    mutationFn: ({ slotCode, licensePlate }) =>
+      api.post<CameraSlotResult>('/camera/slot-occupied', { slotCode, licensePlate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['availability'] })
     },
   })
 }
 
-// TODO(opus): POST /api/camera/slot-vacated
+// POST /api/camera/slot-vacated
 export function useCameraVacated() {
+  const queryClient = useQueryClient()
   return useMutation<CameraSlotResult, Error, { slotCode: string }>({
-    mutationFn: async ({ slotCode: _slotCode }) => {
-      await new Promise((r) => setTimeout(r, 400))
-      return { matched: true, slotStatus: 'Available' }
+    mutationFn: ({ slotCode }) =>
+      api.post<CameraSlotResult>('/camera/slot-vacated', { slotCode }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['slots'] })
+      queryClient.invalidateQueries({ queryKey: ['availability'] })
     },
   })
 }
