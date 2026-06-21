@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 
 /**
  * Driver area landing — a standalone shell (NOT the staff/manager console DashboardLayout).
- * Placeholder until the driver tranche (auth / book / my-bookings / profile) is built.
  */
 export default function DriverHome() {
   const router = useRouter()
@@ -31,7 +30,12 @@ export default function DriverHome() {
     )
   }
 
-  const placeholderNav = ['Đặt chỗ', 'Đặt chỗ của tôi', 'Tìm xe của tôi', 'Hồ sơ']
+  const navItems = [
+    { label: 'Đặt chỗ', icon: 'local_parking', action: () => router.push('/driver/book'), enabled: true },
+    { label: 'Đặt chỗ của tôi', icon: 'receipt_long', action: undefined, enabled: false },
+    { label: 'Tìm xe của tôi', icon: 'search', action: undefined, enabled: false },
+    { label: 'Hồ sơ', icon: 'account_circle', action: undefined, enabled: false },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,20 +63,30 @@ export default function DriverHome() {
 
       <main className="mx-auto max-w-3xl p-6">
         <h1 className="text-2xl font-semibold text-gray-900">Chào {user.full_name}</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Khu vực dành cho tài xế. Các chức năng đang được phát triển.
-        </p>
+        <p className="mt-1 text-sm text-gray-600">Khu vực dành cho tài xế. Chọn chức năng bên dưới.</p>
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {placeholderNav.map((label) => (
-            <div
-              key={label}
-              className="cursor-not-allowed rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-sm font-medium text-gray-400"
-            >
-              {label}
-              <div className="mt-1 text-xs">Sắp ra mắt</div>
-            </div>
-          ))}
+          {navItems.map((item) =>
+            item.enabled ? (
+              <button
+                key={item.label}
+                onClick={item.action}
+                className="flex flex-col items-center gap-2 rounded-xl border border-blue-200 bg-white p-5 text-center text-sm font-medium text-blue-600 shadow-sm hover:bg-blue-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-3xl">{item.icon}</span>
+                {item.label}
+              </button>
+            ) : (
+              <div
+                key={item.label}
+                className="flex flex-col items-center gap-2 cursor-not-allowed rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-sm font-medium text-gray-400"
+              >
+                <span className="material-symbols-outlined text-3xl text-gray-300">{item.icon}</span>
+                {item.label}
+                <div className="text-xs">Sắp ra mắt</div>
+              </div>
+            )
+          )}
         </div>
       </main>
     </div>

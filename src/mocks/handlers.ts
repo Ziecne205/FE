@@ -414,13 +414,31 @@ export const handlers = [
     return HttpResponse.json(newSession, { status: 201 })
   }),
 
-  // Payments — POST /api/payments (paymentType:'Parking')
+  // Payments — POST /api/payments (paymentType:'Parking' | 'Deposit')
   http.post('/api/payments', async ({ request }) => {
     const body = await request.json() as {
       paymentType: string
-      sessionId: string
+      sessionId?: string
+      reservationId?: string
       paymentMethod: string
       amount?: number
+    }
+
+    // Deposit payment: confirm a reservation
+    if (body.paymentType === 'Deposit') {
+      const resIdx = reservationsV2.findIndex((r) => r.reservationId === body.reservationId)
+      if (resIdx === -1) {
+        return HttpResponse.json(
+          { success: false, message: 'Không tìm thấy đặt chỗ', errorCode: 'NOT_FOUND' },
+          { status: 404 },
+        )
+      }
+      reservationsV2[resIdx] = { ...reservationsV2[resIdx], status: 'Confirmed' }
+      return HttpResponse.json({
+        success: true,
+        paymentId: `DEP-${Date.now()}`,
+        status: 'Success',
+      })
     }
 
     const idx = sessionsV2.findIndex((s) => s.sessionId === body.sessionId)

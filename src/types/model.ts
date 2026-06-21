@@ -8,6 +8,15 @@ export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserve
 export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Abandoned';
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
+
+export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
+  Pending: 'Chờ thanh toán',
+  Confirmed: 'Đã xác nhận',
+  CheckedIn: 'Đã vào bãi',
+  Fulfilled: 'Hoàn thành',
+  Cancelled: 'Đã hủy',
+  Expired: 'Hết hạn',
+}
 export type PaymentStatus = 'Pending' | 'Success' | 'Failed' | 'Refunded';
 export type PaymentType = 'Deposit' | 'Parking' | 'Penalty';
 export type PaymentMethod = 'Cash' | 'QR' | 'WindshieldQR';
