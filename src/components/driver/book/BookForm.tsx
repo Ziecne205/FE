@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useParkingLots, useVehicleTypes, useAvailability } from '@/hooks/useAvailability'
 import { useCreateReservation, type CreateReservationResult } from '@/hooks/useReservations'
+import { useSavedVehicles } from '@/hooks/useProfile'
 import type { BookFormValues } from './types'
 
 const schema = z
@@ -29,12 +30,14 @@ interface ReadonlyBookFormProps {
 export function BookForm({ userId, onSuccess }: ReadonlyBookFormProps) {
   const { data: lots = [] } = useParkingLots()
   const { data: vehicleTypes = [] } = useVehicleTypes()
+  const { data: savedVehicles = [] } = useSavedVehicles(userId ?? '')
   const createReservation = useCreateReservation()
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<BookFormValues>({
     resolver: zodResolver(schema),
@@ -178,6 +181,20 @@ export function BookForm({ userId, onSuccess }: ReadonlyBookFormProps) {
           <label className="text-sm font-medium text-gray-900" htmlFor="licensePlate">
             Biển Số Xe
           </label>
+          {savedVehicles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-1">
+              {savedVehicles.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setValue('licensePlate', v.licensePlate, { shouldValidate: true })}
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 font-mono text-xs text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  {v.licensePlate}
+                </button>
+              ))}
+            </div>
+          )}
           <input
             id="licensePlate"
             type="text"

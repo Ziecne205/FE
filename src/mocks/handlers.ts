@@ -26,6 +26,20 @@ import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest, RegisterReq
 let slots = structuredClone(mockSlots)
 let sessions = structuredClone(mockSessions)
 
+// ── User profile + saved vehicles (in-memory store) ──────────────────────────
+interface SavedVehicle { id: string; licensePlate: string; vehicleTypeId: string; brand?: string; model?: string; color?: string }
+interface UserProfile { id: string; email: string; phone: string; fullName: string; role: string }
+
+const usersStore: Record<string, UserProfile> = {
+  '1': { id: '1', email: 'driver@example.com', phone: '0901234567', fullName: 'Nguyễn Văn A', role: 'Driver' },
+}
+const vehiclesStore: Record<string, SavedVehicle[]> = {
+  '1': [
+    { id: 'sv-1', licensePlate: '29A-123.45', vehicleTypeId: 'vt-car' },
+    { id: 'sv-2', licensePlate: '30G-789.12', vehicleTypeId: 'vt-moto' },
+  ],
+}
+
 // ── Capacity-reservation model state (new contract) ─────────────────────────────
 let slotsV2 = generateSlots('lot-1')
 let incidentsV2 = structuredClone(mockIncidents)
@@ -78,6 +92,46 @@ interface CreateReservationRequest {
 }
 
 export const handlers = [
+  // ── User profile ─────────────────────────────────────────────────────────────
+  http.get('/api/users/:id', ({ params }) => {
+    const user = usersStore[String(params.id)]
+    if (!user) return HttpResponse.json({ success: false, errorCode: 'NOT_FOUND' }, { status: 404 })
+    const vehicles = vehiclesStore[String(params.id)] ?? []
+    return HttpResponse.json({ user, vehicles })
+  }),
+
+  http.put('/api/users/:id', async ({ params, request }) => {
+    const id = String(params.id)
+    const body = (await request.json()) as Partial<UserProfile>
+    if (!usersStore[id]) return HttpResponse.json({ success: false, errorCode: 'NOT_FOUND' }, { status: 404 })
+    usersStore[id] = { ...usersStore[id], ...body, id }
+    return HttpResponse.json(usersStore[id])
+  }),
+
+  http.get('/api/users/:id/vehicles', ({ params }) => {
+    const vehicles = vehiclesStore[String(params.id)] ?? []
+    return HttpResponse.json(vehicles)
+  }),
+
+  http.post('/api/users/:id/vehicles', async ({ params, request }) => {
+    const id = String(params.id)
+    const body = (await request.json()) as Omit<SavedVehicle, 'id'>
+    if (!vehiclesStore[id]) vehiclesStore[id] = []
+    const vehicle: SavedVehicle = { ...body, id: `sv-${Date.now()}` }
+    vehiclesStore[id].push(vehicle)
+    return HttpResponse.json(vehicle, { status: 201 })
+  }),
+
+  http.delete('/api/users/:id/vehicles/:vehicleId', ({ params }) => {
+    const id = String(params.id)
+    const vehicleId = String(params.vehicleId)
+    if (vehiclesStore[id]) {
+      vehiclesStore[id] = vehiclesStore[id].filter((v) => v.id !== vehicleId)
+    }
+    return HttpResponse.json({ success: true })
+  }),
+
+
   // ── Sessions V2 (capacity-reservation model) ──────────────────────────────────
   http.get('/api/sessions', ({ request }) => {
     const url = new URL(request.url)
