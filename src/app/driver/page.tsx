@@ -17,7 +17,7 @@ export default function DriverHome() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      router.replace('/login')
+      router.replace('/driver/auth')
     } else if (user.role !== 'Driver') {
       router.replace(roleHome[user.role])
     }

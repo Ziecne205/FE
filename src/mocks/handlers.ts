@@ -18,7 +18,7 @@ import type {
   Reservation,
   ReservationStatus,
 } from '@/types/model'
-import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest } from './types'
+import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest, RegisterRequest } from './types'
 
 // Create deep clones to avoid mutation.
 // NOTE: slots/sessions remain on the legacy contract until the /dashboard and
@@ -477,23 +477,45 @@ export const handlers = [
 
   // Auth endpoints
   http.post('/api/auth/login', async ({ request }) => {
-    const { email, password } = await request.json() as LoginRequest
+    const { email } = await request.json() as LoginRequest
 
-    // Mock authentication
+    const role =
+      email.includes('admin') ? 'Admin'
+      : email.includes('manager') ? 'Manager'
+      : email.includes('driver') ? 'Driver'
+      : 'Staff'
+
+    const fullNameByRole: Record<string, string> = {
+      Admin: 'Quản trị viên',
+      Manager: 'Nguyễn Văn A',
+      Staff: 'Trần Thị B',
+      Driver: 'Tài xế',
+    }
+
     const user = {
       id: '1',
       email,
       phone: '0123456789',
-      full_name: email.includes('manager') ? 'Nguyễn Văn A' : 'Trần Thị B',
-      role: email.includes('manager') ? 'Manager' : 'Staff',
-      facility_id: 'facility-1',
-      created_at: new Date(),
+      full_name: fullNameByRole[role],
+      role,
+      facility_id: role !== 'Driver' ? 'facility-1' : undefined,
     }
 
-    return HttpResponse.json({
-      user,
-      token: 'mock-jwt-token',
-    })
+    return HttpResponse.json({ user, token: 'mock-jwt-token' })
+  }),
+
+  http.post('/api/auth/register', async ({ request }) => {
+    const body = await request.json() as RegisterRequest
+
+    const user = {
+      id: `user-${Date.now()}`,
+      email: body.email,
+      phone: body.phone,
+      full_name: body.fullName,
+      role: 'Driver',
+    }
+
+    return HttpResponse.json({ user, token: 'mock-jwt-token' }, { status: 201 })
   }),
 
   http.post('/api/auth/logout', () => {

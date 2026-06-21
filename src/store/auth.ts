@@ -8,6 +8,7 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
+  register: (fields: { fullName: string; phone: string; email: string; password: string; licensePlate?: string }) => Promise<void>
   logout: () => void
   setUser: (user: User) => void
 }
@@ -22,35 +23,54 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true })
         try {
-          // Mock login - will be replaced with real API call.
-          // Role is derived from the email keyword (admin@/manager@/driver@/else staff).
-          const role: User['role'] = email.includes('admin')
-            ? 'Admin'
-            : email.includes('manager')
-            ? 'Manager'
-            : email.includes('driver')
-            ? 'Driver'
-            : 'Staff'
-          const fullNameByRole: Record<User['role'], string> = {
-            Admin: 'Quản trị viên',
-            Manager: 'Nguyễn Văn A',
-            Staff: 'Trần Thị B',
-            Driver: 'Tài xế',
-          }
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          })
+          if (!res.ok) throw new Error('Login failed')
+          const { user: u, token } = await res.json()
           const mockUser: User = {
-            id: '1',
-            email,
-            phone: '0123456789',
-            full_name: fullNameByRole[role],
-            role,
-            facility_id: 'facility-1',
+            id: u.id,
+            email: u.email,
+            phone: u.phone ?? '',
+            full_name: u.full_name,
+            role: u.role as User['role'],
+            facility_id: u.facility_id,
           }
-
+          if (token) sessionStorage.setItem('token', token)
           set({ user: mockUser, isAuthenticated: true, isLoading: false })
           toast.success('Đăng nhập thành công')
         } catch (error) {
           set({ isLoading: false })
           toast.error('Đăng nhập thất bại')
+          throw error
+        }
+      },
+
+      register: async (fields) => {
+        set({ isLoading: true })
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...fields, role: 'Driver' }),
+          })
+          if (!res.ok) throw new Error('Register failed')
+          const { user: u, token } = await res.json()
+          const mockUser: User = {
+            id: u.id,
+            email: u.email,
+            phone: u.phone ?? '',
+            full_name: u.full_name,
+            role: 'Driver',
+          }
+          if (token) sessionStorage.setItem('token', token)
+          set({ user: mockUser, isAuthenticated: true, isLoading: false })
+          toast.success('Đăng ký thành công')
+        } catch (error) {
+          set({ isLoading: false })
+          toast.error('Đăng ký thất bại')
           throw error
         }
       },
