@@ -180,6 +180,15 @@ export const handlers = [
     return HttpResponse.json(incidentsV2[idx])
   }),
 
+  // Reservations by user — driver "my bookings"
+  http.get('/api/reservations/user/:userId', ({ params, request }) => {
+    const url = new URL(request.url)
+    const status = url.searchParams.get('status')
+    let result = reservationsV2.filter((r) => r.userId === params.userId)
+    if (status && status !== 'all') result = result.filter((r) => r.status === status)
+    return HttpResponse.json(result)
+  }),
+
   // Reservations — capacity-slot bookings (no physical slot).
   http.get('/api/reservations', ({ request }) => {
     const url = new URL(request.url)

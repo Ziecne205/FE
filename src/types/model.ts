@@ -51,6 +51,7 @@ export interface Slot {
 
 export interface Reservation {
   reservationId: string;
+  userId?: string; // driver who owns this reservation
   parkingLotId: string;
   parkingLotName?: string;
   vehicleTypeId: string;
