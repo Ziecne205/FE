@@ -5,6 +5,7 @@ import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
 import { ManagerDashboard } from '@/components/dashboard/ManagerDashboard'
 import { StaffDashboard } from '@/components/dashboard/StaffDashboard'
 import { ManualEntryModal } from '@/components/dashboard/ManualEntryModal'
+import { SystemOverview } from '@/components/admin/system-overview'
 import { useAuthStore } from '@/store'
 import { useSlots, useCreateSession, type CreateSessionInput } from '@/hooks'
 import type { OccupancyStats } from '@/types'
@@ -14,6 +15,16 @@ export default function Dashboard() {
   const { data: slots, refetch, isLoading } = useSlots()
   const createSession = useCreateSession()
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  if (user?.role === 'Admin') {
+    return (
+      <ProtectedLayout>
+        <div className="p-xl max-w-container-max mx-auto">
+          <SystemOverview />
+        </div>
+      </ProtectedLayout>
+    )
+  }
 
   if (isLoading || !slots) {
     return (
@@ -28,7 +39,6 @@ export default function Dashboard() {
     )
   }
 
-  // Calculate occupancy stats from slots
   const stats: OccupancyStats = {
     total_slots: slots.length,
     available: slots.filter((s) => s.status === 'Available').length,
@@ -38,10 +48,9 @@ export default function Dashboard() {
     occupancy_rate: Math.round(
       (slots.filter((s) => s.status === 'Occupied').length / slots.length) * 100
     ),
-    current_revenue: slots.filter((s) => s.status === 'Occupied').length * 10000 * 2, // Mock revenue
+    current_revenue: slots.filter((s) => s.status === 'Occupied').length * 10000 * 2,
   }
 
-  // Filter available slots for manual entry
   const availableSlots = slots.filter((slot) => slot.status === 'Available')
 
   const handleManualEntry = async (data: CreateSessionInput) => {
@@ -50,7 +59,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedLayout>
-      {user?.role === 'Manager' || user?.role === 'Admin' ? (
+      {user?.role === 'Manager' ? (
         <ManagerDashboard stats={stats} onRefresh={() => refetch()} />
       ) : (
         <>
@@ -59,7 +68,6 @@ export default function Dashboard() {
             onRefresh={() => refetch()}
             onManualEntry={() => setIsModalOpen(true)}
           />
-
           <ManualEntryModal
             open={isModalOpen}
             onClose={() => setIsModalOpen(false)}
