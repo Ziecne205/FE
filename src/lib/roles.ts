@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types'
+import type { UserRole } from '@/types/model'
 
 /**
  * Role-based routing config (one app, four roles).

@@ -3,7 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import type { User } from '@/types';
+import type { User } from '@/types/model';
 
 interface DashboardLayoutProps {
   children: ReactNode;

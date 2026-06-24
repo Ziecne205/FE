@@ -45,7 +45,7 @@ export default function DriverHome() {
           <span className="text-lg font-bold text-gray-900">ParkFlow — Tài xế</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">{user.full_name}</span>
+          <span className="text-sm text-gray-600">{user.fullName}</span>
           <Button
             variant="outline"
             size="sm"
@@ -62,7 +62,7 @@ export default function DriverHome() {
       </header>
 
       <main className="mx-auto max-w-3xl p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Chào {user.full_name}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Chào {user.fullName}</h1>
         <p className="mt-1 text-sm text-gray-600">Khu vực dành cho tài xế. Chọn chức năng bên dưới.</p>
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">

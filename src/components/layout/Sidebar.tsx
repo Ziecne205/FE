@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { UserRole } from '@/types';
+import type { UserRole } from '@/types/model';
 
 interface SidebarProps {
   userRole: UserRole;

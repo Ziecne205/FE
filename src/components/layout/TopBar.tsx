@@ -2,7 +2,7 @@
 
 import { Menu, ChevronRight } from 'lucide-react';
 import { USER_ROLE_LABELS } from '@/lib/constants';
-import type { User } from '@/types';
+import type { User } from '@/types/model';
 
 interface TopBarProps {
   user: User;
@@ -62,7 +62,7 @@ export function TopBar({ user, breadcrumbs, lastUpdate, onMenuClick }: TopBarPro
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-bold text-gray-900 leading-none">
-              {user.full_name}
+              {user.fullName}
             </p>
             <p className="text-xs text-gray-600 uppercase tracking-tight">
               {USER_ROLE_LABELS[user.role]}
@@ -70,7 +70,7 @@ export function TopBar({ user, breadcrumbs, lastUpdate, onMenuClick }: TopBarPro
           </div>
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center">
             <span className="text-gray-600 font-semibold text-sm">
-              {user.full_name.charAt(0).toUpperCase()}
+              {user.fullName.charAt(0).toUpperCase()}
             </span>
           </div>
         </div>

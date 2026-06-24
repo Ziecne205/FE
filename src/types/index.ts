@@ -93,14 +93,8 @@ export interface Exception {
   status: ExceptionStatus;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  phone: string;
-  full_name: string;
-  role: UserRole;
-  facility_id?: string; // for Manager/Staff
-}
+// NOTE: the canonical `User` lives in `@/types/model` (fullName / parkingLotId).
+// The old slot-owns-booking `User` shape was removed to de-duplicate the auth layer.
 
 // UI-specific types
 

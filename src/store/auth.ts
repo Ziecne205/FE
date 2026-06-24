@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User } from '@/types'
+import type { User } from '@/types/model'
 import { toast } from 'sonner'
 
 interface AuthState {
@@ -30,16 +30,17 @@ export const useAuthStore = create<AuthState>()(
           })
           if (!res.ok) throw new Error('Login failed')
           const { user: u, token } = await res.json()
-          const mockUser: User = {
+          const loggedUser: User = {
             id: u.id,
             email: u.email,
             phone: u.phone ?? '',
-            full_name: u.full_name,
-            role: u.role as User['role'],
-            facility_id: u.facility_id,
+            fullName: u.fullName,
+            role: u.role,
+            parkingLotId: u.parkingLotId,
+            status: 'Active',
           }
           if (token) sessionStorage.setItem('token', token)
-          set({ user: mockUser, isAuthenticated: true, isLoading: false })
+          set({ user: loggedUser, isAuthenticated: true, isLoading: false })
           toast.success('Đăng nhập thành công')
         } catch (error) {
           set({ isLoading: false })
@@ -58,15 +59,16 @@ export const useAuthStore = create<AuthState>()(
           })
           if (!res.ok) throw new Error('Register failed')
           const { user: u, token } = await res.json()
-          const mockUser: User = {
+          const registeredUser: User = {
             id: u.id,
             email: u.email,
             phone: u.phone ?? '',
-            full_name: u.full_name,
+            fullName: u.fullName,
             role: 'Driver',
+            status: 'Active',
           }
           if (token) sessionStorage.setItem('token', token)
-          set({ user: mockUser, isAuthenticated: true, isLoading: false })
+          set({ user: registeredUser, isAuthenticated: true, isLoading: false })
           toast.success('Đăng ký thành công')
         } catch (error) {
           set({ isLoading: false })

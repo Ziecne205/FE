@@ -10,6 +10,7 @@ import {
 import { mockIncidents } from './data/incidents'
 import { mockReservations } from './data/reservations'
 import { mockQuotas } from './data/quotas'
+import { MOCK_USERS, findAccountByEmail, accountForUnknownEmail } from './data/users'
 import { MOCK_SESSIONS } from '@/components/active-sessions/mockData'
 import type {
   BookingQuota,
@@ -30,11 +31,15 @@ let sessions = structuredClone(mockSessions)
 interface SavedVehicle { id: string; licensePlate: string; vehicleTypeId: string; brand?: string; model?: string; color?: string }
 interface UserProfile { id: string; email: string; phone: string; fullName: string; role: string }
 
-const usersStore: Record<string, UserProfile> = {
-  '1': { id: '1', email: 'driver@example.com', phone: '0901234567', fullName: 'Nguyễn Văn A', role: 'Driver' },
-}
+// Profile store seeded from the single mock-accounts source (all 4 roles share ids with auth).
+const usersStore: Record<string, UserProfile> = Object.fromEntries(
+  MOCK_USERS.map((u) => [
+    u.id,
+    { id: u.id, email: u.email, phone: u.phone, fullName: u.fullName, role: u.role },
+  ]),
+)
 const vehiclesStore: Record<string, SavedVehicle[]> = {
-  '1': [
+  'u-driver': [
     { id: 'sv-1', licensePlate: '29A-123.45', vehicleTypeId: 'vt-car' },
     { id: 'sv-2', licensePlate: '30G-789.12', vehicleTypeId: 'vt-moto' },
   ],
@@ -556,46 +561,32 @@ export const handlers = [
     })
   }),
 
-  // Auth endpoints
+  // Auth endpoints — accounts come from the single MOCK_USERS source (see data/users.ts).
   http.post('/api/auth/login', async ({ request }) => {
-    const { email } = await request.json() as LoginRequest
-
-    const role =
-      email.includes('admin') ? 'Admin'
-      : email.includes('manager') ? 'Manager'
-      : email.includes('driver') ? 'Driver'
-      : 'Staff'
-
-    const fullNameByRole: Record<string, string> = {
-      Admin: 'Quản trị viên',
-      Manager: 'Nguyễn Văn A',
-      Staff: 'Trần Thị B',
-      Driver: 'Tài xế',
-    }
-
+    const { email, password } = (await request.json()) as LoginRequest
+    // Known demo account → exact match (password lenient for demo). Unknown email → role by keyword.
+    const account = findAccountByEmail(email) ?? accountForUnknownEmail(email)
+    void password
     const user = {
-      id: '1',
-      email,
-      phone: '0123456789',
-      full_name: fullNameByRole[role],
-      role,
-      facility_id: role !== 'Driver' ? 'facility-1' : undefined,
+      id: account.id,
+      email: account.email,
+      phone: account.phone,
+      fullName: account.fullName,
+      role: account.role,
+      parkingLotId: account.parkingLotId,
     }
-
     return HttpResponse.json({ user, token: 'mock-jwt-token' })
   }),
 
   http.post('/api/auth/register', async ({ request }) => {
-    const body = await request.json() as RegisterRequest
-
-    const user = {
-      id: `user-${Date.now()}`,
-      email: body.email,
-      phone: body.phone,
-      full_name: body.fullName,
-      role: 'Driver',
+    const body = (await request.json()) as RegisterRequest
+    const id = `u-driver-${Date.now()}`
+    // Persist so the new driver's profile + vehicles resolve immediately.
+    usersStore[id] = { id, email: body.email, phone: body.phone, fullName: body.fullName, role: 'Driver' }
+    if (body.licensePlate) {
+      vehiclesStore[id] = [{ id: `sv-${Date.now()}`, licensePlate: body.licensePlate, vehicleTypeId: 'vt-car' }]
     }
-
+    const user = { id, email: body.email, phone: body.phone, fullName: body.fullName, role: 'Driver' }
     return HttpResponse.json({ user, token: 'mock-jwt-token' }, { status: 201 })
   }),
 
