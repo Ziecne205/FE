@@ -1,8 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { mockSlots } from './data/slots'
-import { mockSessions } from './data/sessions'
 import {
-  PARKING_LOTS,
   VEHICLE_TYPES,
   generateSlots,
   computeAvailability,
@@ -10,22 +7,19 @@ import {
 import { mockIncidents } from './data/incidents'
 import { mockReservations } from './data/reservations'
 import { mockQuotas } from './data/quotas'
+import { mockPricingPolicies, mockFeeConfig } from './data/pricing'
 import { MOCK_USERS, findAccountByEmail, accountForUnknownEmail } from './data/users'
 import { MOCK_SESSIONS } from '@/components/active-sessions/mockData'
 import type {
   BookingQuota,
+  FeeConfig,
   Incident,
   ParkingSession,
+  PricingPolicy,
   Reservation,
   ReservationStatus,
 } from '@/types/model'
-import type { UpdateSlotRequest, CreateSessionRequest, LoginRequest, RegisterRequest } from './types'
-
-// Create deep clones to avoid mutation.
-// NOTE: slots/sessions remain on the legacy contract until the /dashboard and
-// /sessions screens are migrated; everything else is capacity-reservation.
-let slots = structuredClone(mockSlots)
-let sessions = structuredClone(mockSessions)
+import type { CreateSessionRequest } from './types'
 
 // ── User profile + saved vehicles (in-memory store) ──────────────────────────
 interface SavedVehicle { id: string; licensePlate: string; vehicleTypeId: string; brand?: string; model?: string; color?: string }
@@ -46,10 +40,12 @@ const vehiclesStore: Record<string, SavedVehicle[]> = {
 }
 
 // ── Capacity-reservation model state (new contract) ─────────────────────────────
-let slotsV2 = generateSlots('lot-1')
+let slotsV2 = generateSlots()
 let incidentsV2 = structuredClone(mockIncidents)
 let reservationsV2 = structuredClone(mockReservations)
 let quotasV2: BookingQuota[] = structuredClone(mockQuotas)
+let pricingV2: PricingPolicy[] = structuredClone(mockPricingPolicies)
+let feeConfig: FeeConfig = { ...mockFeeConfig }
 
 // sessionsV2 — gate-camera-simulator store (seeded from component mockData)
 let sessionsV2: ParkingSession[] = structuredClone(MOCK_SESSIONS)
@@ -60,14 +56,12 @@ const ACTIVE_RES_STATUSES: ReservationStatus[] = ['Pending', 'Confirmed', 'Check
 function resolveQuotaPercent(
   vehicleTypeId: string,
   entryTime: string,
-  lotId: string,
 ): number {
   // Parse entry time as HH:mm for window matching
   const entryDate = new Date(entryTime)
   const hhmm = `${entryDate.getHours().toString().padStart(2, '0')}:${entryDate.getMinutes().toString().padStart(2, '0')}`
   const match = quotasV2.find(
     (q) =>
-      q.parkingLotId === lotId &&
       q.vehicleTypeId === vehicleTypeId &&
       q.isActive &&
       hhmm >= q.windowStart &&
@@ -87,7 +81,6 @@ interface ResolveIncidentRequest {
 }
 
 interface CreateReservationRequest {
-  parkingLotId: string
   vehicleTypeId: string
   licensePlate: string
   expectedEntryTime: string
@@ -138,19 +131,9 @@ export const handlers = [
 
 
   // ── Sessions V2 (capacity-reservation model) ──────────────────────────────────
-  http.get('/api/sessions', ({ request }) => {
-    const url = new URL(request.url)
-    const lotId = url.searchParams.get('lotId')
-    const open = url.searchParams.get('open')
-    // New-contract request: has open= param
-    if (open === 'true') {
-      const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
-      let result = sessionsV2.filter((s) => OPEN_STATUSES.includes(s.status))
-      if (lotId) result = result.filter((s) => s.parkingLotId === lotId)
-      return HttpResponse.json(result)
-    }
-    // Legacy fallback
-    return HttpResponse.json(sessions)
+  http.get('/api/sessions', () => {
+    const OPEN_STATUSES = ['Admitted', 'Parked', 'Moved']
+    return HttpResponse.json(sessionsV2.filter((s) => OPEN_STATUSES.includes(s.status)))
   }),
 
   http.get('/api/sessions/find', ({ request }) => {
@@ -174,17 +157,11 @@ export const handlers = [
   // ── Capacity-reservation endpoints (APIs-List.md) ─────────────────────────────
   http.get('/api/vehicle-types', () => HttpResponse.json(VEHICLE_TYPES)),
 
-  http.get('/api/parking-lots', () => HttpResponse.json(PARKING_LOTS)),
+  // Per-slot list for the visual map (toàn tòa).
+  http.get('/api/slots-map', () => HttpResponse.json(slotsV2)),
 
-  // Per-slot list for the visual map (flagged as an open question in the plan).
-  http.get('/api/parking-lots/:id/slots', ({ params }) =>
-    HttpResponse.json(slotsV2.filter((s) => s.parkingLotId === params.id))
-  ),
-
-  // Realtime availability / headroom — source of truth for "occupancy".
-  http.get('/api/parking-lots/:id/availability', ({ params }) =>
-    HttpResponse.json(computeAvailability(slotsV2, String(params.id)))
-  ),
+  // Realtime availability / headroom — source of truth for "occupancy" (toàn tòa).
+  http.get('/api/availability', () => HttpResponse.json(computeAvailability(slotsV2))),
 
   // Manager maintenance toggle + capacity-crash warning.
   http.post('/api/admin/slots/maintenance', async ({ request }) => {
@@ -209,13 +186,11 @@ export const handlers = [
     })
   }),
 
-  // Incidents — list (status/lot filter) + resolve.
+  // Incidents — list (status filter) + resolve.
   http.get('/api/incidents', ({ request }) => {
     const url = new URL(request.url)
     const status = url.searchParams.get('status')
-    const lotId = url.searchParams.get('lotId')
     let result = incidentsV2
-    if (lotId) result = result.filter((i) => i.parkingLotId === lotId)
     if (status && status !== 'all') result = result.filter((i) => i.status === status)
     return HttpResponse.json(result)
   }),
@@ -252,9 +227,7 @@ export const handlers = [
   http.get('/api/reservations', ({ request }) => {
     const url = new URL(request.url)
     const status = url.searchParams.get('status')
-    const lotId = url.searchParams.get('lotId')
     let result = reservationsV2
-    if (lotId) result = result.filter((r) => r.parkingLotId === lotId)
     if (status && status !== 'all') result = result.filter((r) => r.status === status)
     return HttpResponse.json(result)
   }),
@@ -266,11 +239,7 @@ export const handlers = [
     const capacity = slotsV2.filter(
       (s) => s.vehicleTypeId === body.vehicleTypeId && s.status !== 'Maintenance',
     ).length
-    const quotaPercent = resolveQuotaPercent(
-      body.vehicleTypeId,
-      body.expectedEntryTime,
-      body.parkingLotId,
-    )
+    const quotaPercent = resolveQuotaPercent(body.vehicleTypeId, body.expectedEntryTime)
     const quotaAbs = Math.ceil(quotaPercent * capacity)
     const activeCount = reservationsV2.filter(
       (r) => r.vehicleTypeId === body.vehicleTypeId && ACTIVE_RES_STATUSES.includes(r.status),
@@ -295,7 +264,6 @@ export const handlers = [
 
     const reservation: Reservation = {
       reservationId: `res-${Date.now()}`,
-      parkingLotId: body.parkingLotId,
       vehicleTypeId: body.vehicleTypeId,
       vehicleTypeName,
       licensePlate: body.licensePlate,
@@ -331,12 +299,7 @@ export const handlers = [
   }),
 
   // Quotas — GET list, POST create, PUT update.
-  http.get('/api/admin/quotas', ({ request }) => {
-    const url = new URL(request.url)
-    const lotId = url.searchParams.get('lotId')
-    const result = lotId ? quotasV2.filter((q) => q.parkingLotId === lotId) : quotasV2
-    return HttpResponse.json(result)
-  }),
+  http.get('/api/admin/quotas', () => HttpResponse.json(quotasV2)),
 
   http.post('/api/admin/quotas', async ({ request }) => {
     const body = (await request.json()) as Omit<BookingQuota, 'quotaId'>
@@ -370,9 +333,45 @@ export const handlers = [
     return HttpResponse.json(quotasV2[idx])
   }),
 
+  // ── Quản lý tài chính (Manager) — bảng giá theo giờ + chính sách phí ─────────────
+  http.get('/api/manager/pricing-policies', () => HttpResponse.json(pricingV2)),
+
+  http.put('/api/manager/pricing-policies/:id', async ({ params, request }) => {
+    const body = (await request.json()) as Partial<PricingPolicy>
+    if (body.hourlyRate !== undefined && body.hourlyRate < 0) {
+      return HttpResponse.json(
+        { success: false, message: 'Giá/giờ phải ≥ 0', errorCode: 'INVALID_INPUT' },
+        { status: 422 },
+      )
+    }
+    const idx = pricingV2.findIndex((p) => p.policyId === params.id)
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, message: 'Không tìm thấy bảng giá', errorCode: 'NOT_FOUND' },
+        { status: 404 },
+      )
+    }
+    pricingV2[idx] = { ...pricingV2[idx], ...body, policyId: pricingV2[idx].policyId }
+    return HttpResponse.json(pricingV2[idx])
+  }),
+
+  http.get('/api/manager/fee-config', () => HttpResponse.json(feeConfig)),
+
+  http.put('/api/manager/fee-config', async ({ request }) => {
+    const body = (await request.json()) as Partial<FeeConfig>
+    if (body.depositPercent !== undefined && (body.depositPercent < 0 || body.depositPercent > 100)) {
+      return HttpResponse.json(
+        { success: false, message: '% cọc phải trong khoảng 0–100', errorCode: 'INVALID_INPUT' },
+        { status: 422 },
+      )
+    }
+    feeConfig = { ...feeConfig, ...body }
+    return HttpResponse.json(feeConfig)
+  }),
+
   // Reports — revenue + occupancy series for a date range.
   // Pricing: 10k/session 06–18h, 15k/session 18–06h; sessions vary by day-of-week.
-  http.get('/api/admin/lots/:id/reports', ({ request }) => {
+  http.get('/api/admin/reports', ({ request }) => {
     const url = new URL(request.url)
     const from = url.searchParams.get('from') ?? '2026-06-11'
     const to   = url.searchParams.get('to')   ?? '2026-06-17'
@@ -414,69 +413,27 @@ export const handlers = [
     return HttpResponse.json({ revenue, occupancy: occupancyWindows })
   }),
 
-  // Occupancy flow — daily entry/exit/inside per 2-hour window.
-  // inside[i] = inside[i-1] + entries[i] - exits[i]; curve is low→peak→fall.
-  http.get('/api/admin/lots/:id/occupancy', () => {
-    const windows = [
-      { windowStart: '06:00', windowEnd: '08:00', entries: 12,  exits: 2,   inside: 10  },
-      { windowStart: '08:00', windowEnd: '10:00', entries: 58,  exits: 8,   inside: 60  },
-      { windowStart: '10:00', windowEnd: '12:00', entries: 34,  exits: 22,  inside: 72  },
-      { windowStart: '12:00', windowEnd: '14:00', entries: 20,  exits: 38,  inside: 54  },
-      { windowStart: '14:00', windowEnd: '16:00', entries: 42,  exits: 15,  inside: 81  },
-      { windowStart: '16:00', windowEnd: '18:00', entries: 65,  exits: 20,  inside: 126 },
-      { windowStart: '18:00', windowEnd: '20:00', entries: 30,  exits: 55,  inside: 101 },
-      { windowStart: '20:00', windowEnd: '22:00', entries: 10,  exits: 60,  inside: 51  },
-      { windowStart: '22:00', windowEnd: '00:00', entries: 5,   exits: 40,  inside: 16  },
-    ]
-    return HttpResponse.json(windows)
-  }),
-
-  // Slots endpoints
-  http.get('/api/slots', () => {
-    return HttpResponse.json(slots)
-  }),
-
-  http.get('/api/slots/:id', ({ params }) => {
-    const slot = slots.find((s) => s.id === params.id)
-    if (!slot) {
-      return new HttpResponse(null, { status: 404 })
-    }
-    return HttpResponse.json(slot)
-  }),
-
-  http.patch('/api/slots/:id', async ({ params, request }) => {
-    const updates = await request.json() as UpdateSlotRequest
-    const slotIndex = slots.findIndex((s) => s.id === params.id)
-    if (slotIndex === -1) {
-      return new HttpResponse(null, { status: 404 })
-    }
-    slots[slotIndex] = { ...slots[slotIndex], ...updates }
-    return HttpResponse.json(slots[slotIndex])
-  }),
-
-  // Legacy session POST (dashboard manual-entry still uses this)
+  // Staff manual entry — tạo phiên thủ công trên model state (slotsV2/sessionsV2).
   http.post('/api/sessions', async ({ request }) => {
     const data = await request.json() as CreateSessionRequest
+    const slot = slotsV2.find((s) => s.id === data.slot_id)
 
-    // Create new parking session
-    const newSession = {
-      id: `session-${Date.now()}`,
-      booking_id: undefined,
-      vehicle_id: `vehicle-${Date.now()}`,
-      slot_id: data.slot_id,
-      license_plate: data.license_plate,
-      entry_time: new Date().toISOString(),
-      exit_time: undefined,
-      duration_minutes: undefined,
-      status: 'Active' as const,
+    const sessionId = `sess-manual-${Date.now()}`
+    const newSession: ParkingSession = {
+      sessionId,
+      reservationId: null,
+      vehicleTypeId: slot?.vehicleTypeId ?? 'vt-car',
+      licensePlate: data.license_plate,
+      assignedSlotCode: slot?.slotCode,
+      actualSlotCode: slot?.slotCode,
+      entryTime: new Date().toISOString(),
+      isPaid: false,
+      status: 'Parked',
     }
+    sessionsV2.push(newSession)
 
-    sessions.push(newSession)
-
-    // Update slot status to Occupied
-    const slotIndex = slots.findIndex((s) => s.id === data.slot_id)
-    if (slotIndex !== -1) {
-      slots[slotIndex].status = 'Occupied'
+    if (slot) {
+      slotsV2 = slotsV2.map((s) => (s.id === slot.id ? { ...s, status: 'Occupied' as const } : s))
     }
 
     return HttpResponse.json(newSession, { status: 201 })
@@ -561,33 +518,38 @@ export const handlers = [
     })
   }),
 
-  // Auth endpoints — accounts come from the single MOCK_USERS source (see data/users.ts).
+  // Auth endpoints — khớp hợp đồng BE: nhận `username`, trả envelope { success, message, data:LoginResponse }.
   http.post('/api/auth/login', async ({ request }) => {
-    const { email, password } = (await request.json()) as LoginRequest
-    // Known demo account → exact match (password lenient for demo). Unknown email → role by keyword.
-    const account = findAccountByEmail(email) ?? accountForUnknownEmail(email)
-    void password
-    const user = {
-      id: account.id,
-      email: account.email,
-      phone: account.phone,
-      fullName: account.fullName,
-      role: account.role,
-      parkingLotId: account.parkingLotId,
-    }
-    return HttpResponse.json({ user, token: 'mock-jwt-token' })
+    const { username, password } = (await request.json()) as { username: string; password: string }
+    void password // demo: bỏ qua kiểm tra mật khẩu
+    // Khớp theo email/username; không khớp → suy ra role theo từ khoá.
+    const account = findAccountByEmail(username) ?? accountForUnknownEmail(username)
+    return HttpResponse.json({
+      success: true,
+      message: 'OK',
+      data: { token: 'mock-jwt-token', username: account.email, roleName: account.role },
+    })
   }),
 
   http.post('/api/auth/register', async ({ request }) => {
-    const body = (await request.json()) as RegisterRequest
-    const id = `u-driver-${Date.now()}`
-    // Persist so the new driver's profile + vehicles resolve immediately.
-    usersStore[id] = { id, email: body.email, phone: body.phone, fullName: body.fullName, role: 'Driver' }
-    if (body.licensePlate) {
-      vehiclesStore[id] = [{ id: `sv-${Date.now()}`, licensePlate: body.licensePlate, vehicleTypeId: 'vt-car' }]
+    const body = (await request.json()) as {
+      username: string
+      email: string
+      phoneNumber?: string
+      fullName: string
+      roleName?: string
     }
-    const user = { id, email: body.email, phone: body.phone, fullName: body.fullName, role: 'Driver' }
-    return HttpResponse.json({ user, token: 'mock-jwt-token' }, { status: 201 })
+    const id = `u-driver-${Date.now()}`
+    // Persist so the new driver's profile resolves immediately.
+    usersStore[id] = { id, email: body.email, phone: body.phoneNumber ?? '', fullName: body.fullName, role: 'Driver' }
+    return HttpResponse.json(
+      {
+        success: true,
+        message: 'Đăng ký thành công',
+        data: { token: 'mock-jwt-token', username: body.username, roleName: 'Driver' },
+      },
+      { status: 201 },
+    )
   }),
 
   http.post('/api/auth/logout', () => {
@@ -647,7 +609,6 @@ export const handlers = [
     const newSession: ParkingSession = {
       sessionId,
       reservationId: reservationMatched ? reservationsV2[resIdx].reservationId : null,
-      parkingLotId: 'lot-1',
       vehicleTypeId: 'vt-car',
       licensePlate,
       assignedSlotCode: suggestedSlotCode,
@@ -750,7 +711,6 @@ export const handlers = [
     const newSession: ParkingSession = {
       sessionId,
       reservationId: resIdx !== -1 ? reservationsV2[resIdx].reservationId : null,
-      parkingLotId: 'lot-1',
       vehicleTypeId: 'vt-car',
       licensePlate,
       entryTime: new Date().toISOString(),
@@ -762,7 +722,6 @@ export const handlers = [
     // Log MANUAL_OVERRIDE incident
     const incident: Incident = {
       incidentId: `inc-force-${Date.now()}`,
-      parkingLotId: 'lot-1',
       issueType: 'MANUAL_OVERRIDE',
       sessionId,
       description: `Force check-in cho biển số ${licensePlate} bởi nhân viên.`,
@@ -807,7 +766,6 @@ export const handlers = [
       // No matching session — create UNMAPPED_OCCUPANCY incident
       const incident: Incident = {
         incidentId: `inc-unmap-${Date.now()}`,
-        parkingLotId: 'lot-1',
         issueType: 'UNMAPPED_OCCUPANCY',
         slotCode,
         description: `Camera phát hiện xe tại ${slotCode} không khớp phiên nào.${licensePlate ? ` Biển số: ${licensePlate}` : ''}`,

@@ -6,7 +6,6 @@ export const mockQuotas: BookingQuota[] = [
   // Ô tô
   {
     quotaId: 'quota-1',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-car',
     windowStart: '06:00',
     windowEnd: '08:00',
@@ -15,7 +14,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-2',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-car',
     windowStart: '08:00',
     windowEnd: '10:00',
@@ -24,7 +22,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-3',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-car',
     windowStart: '10:00',
     windowEnd: '12:00',
@@ -33,7 +30,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-4',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-car',
     windowStart: '16:00',
     windowEnd: '18:00',
@@ -43,7 +39,6 @@ export const mockQuotas: BookingQuota[] = [
   // Xe máy
   {
     quotaId: 'quota-5',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-moto',
     windowStart: '06:00',
     windowEnd: '08:00',
@@ -52,7 +47,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-6',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-moto',
     windowStart: '08:00',
     windowEnd: '10:00',
@@ -61,7 +55,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-7',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-moto',
     windowStart: '10:00',
     windowEnd: '12:00',
@@ -70,7 +63,6 @@ export const mockQuotas: BookingQuota[] = [
   },
   {
     quotaId: 'quota-8',
-    parkingLotId: 'lot-1',
     vehicleTypeId: 'vt-moto',
     windowStart: '16:00',
     windowEnd: '18:00',

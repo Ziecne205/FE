@@ -5,18 +5,16 @@ import type { BookingQuota } from '@/types/model'
 
 export interface UpsertQuotaInput {
   quotaId?: string
-  parkingLotId: string
   vehicleTypeId: string
   windowStart: string
   windowEnd: string
   quotaPercent: number
 }
 
-export function useQuotas(lotId?: string) {
-  const qs = lotId ? `?lotId=${lotId}` : ''
+export function useQuotas() {
   return useQuery({
-    queryKey: ['quotas', lotId ?? null],
-    queryFn: () => api.get<BookingQuota[]>(`/admin/quotas${qs}`),
+    queryKey: ['quotas'],
+    queryFn: () => api.get<BookingQuota[]>('/admin/quotas'),
   })
 }
 

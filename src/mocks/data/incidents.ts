@@ -4,7 +4,6 @@ import type { Incident } from '@/types/model'
 export const mockIncidents: Incident[] = [
   {
     incidentId: 'inc-1',
-    parkingLotId: 'lot-1',
     issueType: 'UNMAPPED_OCCUPANCY',
     slotCode: 'F1-A07',
     description: 'Camera tầng phát hiện xe đỗ ở F1-A07 nhưng biển số không khớp phiên nào.',
@@ -13,7 +12,6 @@ export const mockIncidents: Incident[] = [
   },
   {
     incidentId: 'inc-2',
-    parkingLotId: 'lot-1',
     issueType: 'ABANDONED_SESSION',
     sessionId: 'sess-88',
     description: 'Phiên Admitted quá 15 phút chưa Parked (biển 51B-99999).',
@@ -22,7 +20,6 @@ export const mockIncidents: Incident[] = [
   },
   {
     incidentId: 'inc-3',
-    parkingLotId: 'lot-1',
     issueType: 'EXIT_UNCLOSED',
     sessionId: 'sess-72',
     description: 'Xe đã Moved nhưng cổng ra không quét được biển số — phiên kẹt quá TTL-Moved.',
@@ -32,7 +29,6 @@ export const mockIncidents: Incident[] = [
   },
   {
     incidentId: 'inc-4',
-    parkingLotId: 'lot-1',
     issueType: 'OVERSTAY',
     sessionId: 'sess-55',
     description: 'Xe có booking quá giờ dự kiến hơn 60 phút (biển 30A-12345).',
@@ -41,7 +37,6 @@ export const mockIncidents: Incident[] = [
   },
   {
     incidentId: 'inc-5',
-    parkingLotId: 'lot-1',
     issueType: 'MANUAL_OVERRIDE',
     sessionId: 'sess-40',
     description: 'Force check-in: sửa biển số 51F-12345 (cũ 51F-12354), nhân viên staff-2.',
@@ -53,7 +48,6 @@ export const mockIncidents: Incident[] = [
   },
   {
     incidentId: 'inc-6',
-    parkingLotId: 'lot-1',
     issueType: 'UNMAPPED_OCCUPANCY',
     slotCode: 'B1-A03',
     description: 'Xe lậu nghi đỗ ở hầm B1-A03, đã cử nhân viên kiểm tra.',

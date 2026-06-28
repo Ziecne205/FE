@@ -4,12 +4,10 @@ import { api, type AppError } from '@/lib/api'
 import type { Reservation, ReservationStatus } from '@/types/model'
 
 export interface ReservationFilter {
-  lotId?: string
   status?: ReservationStatus | 'all'
 }
 
 export interface CreateReservationInput {
-  parkingLotId: string
   vehicleTypeId: string
   licensePlate: string
   expectedEntryTime: string
@@ -26,9 +24,8 @@ export interface CreateReservationResult {
   message: string
 }
 
-function buildQuery({ lotId, status }: ReservationFilter): string {
+function buildQuery({ status }: ReservationFilter): string {
   const params = new URLSearchParams()
-  if (lotId) params.set('lotId', lotId)
   if (status && status !== 'all') params.set('status', status)
   const qs = params.toString()
   return qs ? `?${qs}` : ''
@@ -36,7 +33,7 @@ function buildQuery({ lotId, status }: ReservationFilter): string {
 
 export function useReservations(filter: ReservationFilter = {}) {
   return useQuery({
-    queryKey: ['reservations', filter.lotId ?? null, filter.status ?? 'all'],
+    queryKey: ['reservations', filter.status ?? 'all'],
     queryFn: () => api.get<Reservation[]>(`/reservations${buildQuery(filter)}`),
   })
 }

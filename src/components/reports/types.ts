@@ -1,5 +1,4 @@
-import type { OccupancyWindow } from '@/types/model'
-import type { DateRange } from '@/hooks/useOccupancy'
+import type { OccupancyWindow, DateRange } from '@/types/model'
 
 export interface RevenuePoint {
   date: string

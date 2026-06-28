@@ -23,7 +23,6 @@ import type { QuotaFormDialogProps } from './types'
 export function QuotaFormDialog({
   open,
   initialValues,
-  lotId,
   onClose,
   onSubmit,
   isSubmitting,
@@ -50,7 +49,6 @@ export function QuotaFormDialog({
     e.preventDefault()
     onSubmit({
       quotaId: initialValues?.quotaId,
-      parkingLotId: lotId,
       vehicleTypeId,
       windowStart,
       windowEnd,

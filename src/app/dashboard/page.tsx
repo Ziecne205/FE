@@ -7,12 +7,13 @@ import { StaffDashboard } from '@/components/dashboard/StaffDashboard'
 import { ManualEntryModal } from '@/components/dashboard/ManualEntryModal'
 import { SystemOverview } from '@/components/admin/system-overview'
 import { useAuthStore } from '@/store'
-import { useSlots, useCreateSession, type CreateSessionInput } from '@/hooks'
-import type { OccupancyStats } from '@/types'
+import { useCreateSession, type CreateSessionInput } from '@/hooks'
+import { useLotSlots } from '@/hooks/useAvailability'
+import type { OccupancyStats } from '@/components/dashboard'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
-  const { data: slots, refetch, isLoading } = useSlots()
+  const { data: slots, refetch, isLoading } = useLotSlots()
   const createSession = useCreateSession()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -39,16 +40,14 @@ export default function Dashboard() {
     )
   }
 
+  const occupied = slots.filter((s) => s.status === 'Occupied').length
   const stats: OccupancyStats = {
     total_slots: slots.length,
     available: slots.filter((s) => s.status === 'Available').length,
-    occupied: slots.filter((s) => s.status === 'Occupied').length,
-    reserved: slots.filter((s) => s.status === 'Reserved').length,
+    occupied,
     maintenance: slots.filter((s) => s.status === 'Maintenance').length,
-    occupancy_rate: Math.round(
-      (slots.filter((s) => s.status === 'Occupied').length / slots.length) * 100
-    ),
-    current_revenue: slots.filter((s) => s.status === 'Occupied').length * 10000 * 2,
+    occupancy_rate: slots.length ? Math.round((occupied / slots.length) * 100) : 0,
+    current_revenue: occupied * 10000 * 2,
   }
 
   const availableSlots = slots.filter((slot) => slot.status === 'Available')

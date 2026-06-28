@@ -15,8 +15,7 @@ import { Search } from 'lucide-react'
 import { SessionStatsBar } from './SessionStatsBar'
 import { SessionTable } from './SessionTable'
 import { FindCarSearch } from './FindCarSearch'
-import { useOpenSessions } from '@/hooks/useSessionsV2'
-import { useParkingLots } from '@/hooks/useAvailability'
+import { useOpenSessions } from '@/hooks/useSessions'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import type { SessionStatusFilter } from './types'
 
@@ -24,10 +23,7 @@ export function ActiveSessions() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<SessionStatusFilter>('all')
 
-  const { data: lots } = useParkingLots()
-  const lotId = lots?.[0]?.id
-
-  const { data: sessions, isLoading } = useOpenSessions(lotId)
+  const { data: sessions, isLoading } = useOpenSessions()
 
   const filtered = useMemo(
     () =>

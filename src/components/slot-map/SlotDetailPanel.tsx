@@ -3,7 +3,7 @@
 import { X, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, getStatusColor } from '@/lib/utils'
-import { SLOT_STATUS_LABELS_V2 } from '@/lib/constants'
+import { SLOT_STATUS_LABELS } from '@/lib/constants'
 import type { Slot } from '@/types/model'
 
 interface SlotDetailPanelProps {
@@ -43,7 +43,7 @@ export function SlotDetailPanel({
             getStatusColor(slot.status),
           )}
         >
-          {SLOT_STATUS_LABELS_V2[slot.status]}
+          {SLOT_STATUS_LABELS[slot.status]}
         </span>
       </div>
 

@@ -1,40 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ParkingSession } from '@/types'
-import { toast } from 'sonner'
-
-export function useSessions() {
-  return useQuery({
-    queryKey: ['sessions'],
-    queryFn: async () => {
-      const response = await fetch('/api/sessions')
-      if (!response.ok) {
-        throw new Error('Không thể tải danh sách phiên đỗ xe')
-      }
-      return response.json() as Promise<ParkingSession[]>
-    },
-    throwOnError: (error) => {
-      toast.error('Không thể tải danh sách phiên đỗ xe')
-      return false
-    },
-  })
-}
-
-export function useActiveSessions() {
-  return useQuery({
-    queryKey: ['sessions', 'active'],
-    queryFn: async () => {
-      const response = await fetch('/api/sessions/active')
-      if (!response.ok) {
-        throw new Error('Không thể tải phiên đỗ xe đang hoạt động')
-      }
-      return response.json() as Promise<ParkingSession[]>
-    },
-    throwOnError: (error) => {
-      toast.error('Không thể tải phiên đỗ xe đang hoạt động')
-      return false
-    },
-  })
-}
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import { REFRESH_INTERVAL } from '@/lib/constants'
+import type { ParkingSession } from '@/types/model'
 
 export interface CreateSessionInput {
   license_plate: string
@@ -42,22 +9,12 @@ export interface CreateSessionInput {
   vehicle_type: 'car'
 }
 
+/** Staff manual entry — tạo phiên thủ công khi camera đọc lỗi. */
 export function useCreateSession() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: CreateSessionInput) => {
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) {
-        const error = new Error('Không thể tạo phiên đỗ xe')
-        throw error
-      }
-      return response.json()
-    },
+    mutationFn: (data: CreateSessionInput) => api.post('/sessions', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
       queryClient.invalidateQueries({ queryKey: ['slots'] })
@@ -66,4 +23,31 @@ export function useCreateSession() {
       // Error toast will be shown by the modal
     },
   })
+}
+
+/** Phiên đang mở toàn tòa (giám sát) — GET /sessions?open=true. */
+export function useOpenSessions(): { data: ParkingSession[]; isLoading: boolean } {
+  const query = useQuery<ParkingSession[]>({
+    queryKey: ['sessions', 'open'],
+    queryFn: () => api.get<ParkingSession[]>('/sessions?open=true'),
+    refetchInterval: REFRESH_INTERVAL,
+  })
+  return { data: query.data ?? [], isLoading: query.isLoading }
+}
+
+/** Tìm phiên đang mở theo biển số (hỗ trợ checkout) — GET /sessions/find?plate=. */
+export function useFindCar(plate: string): { data: ParkingSession | null } {
+  const query = useQuery<ParkingSession | null>({
+    queryKey: ['sessions', 'find', plate],
+    queryFn: async () => {
+      try {
+        return await api.get<ParkingSession>(`/sessions/find?plate=${encodeURIComponent(plate)}`)
+      } catch {
+        return null
+      }
+    },
+    enabled: plate.length >= 4,
+    retry: false,
+  })
+  return { data: query.data ?? null }
 }

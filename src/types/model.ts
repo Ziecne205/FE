@@ -1,7 +1,7 @@
 // Capacity-Reservation domain model — canonical types going forward.
 // New code imports from '@/types/model'. The legacy '@/types' (slot-owns-booking)
-// is kept until each screen migrates off it, then collapsed into here and deleted.
-// Source of truth: Business-Flow-v2.md / APIs-List.md / Dictionary.md.
+// is kept until the /dashboard and /sessions screens migrate off it (then deleted).
+// Single building, multiple floors — NO multi-lot (parkingLotId removed v3.1).
 
 // ── Status labels (text as returned by API; service maps INT↔label) ─────────────
 export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserved
@@ -19,7 +19,7 @@ export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
 }
 export type PaymentStatus = 'Pending' | 'Success' | 'Failed' | 'Refunded';
 export type PaymentType = 'Deposit' | 'Parking' | 'Penalty';
-export type PaymentMethod = 'Cash' | 'QR' | 'WindshieldQR';
+export type PaymentMethod = 'Cash' | 'QR';
 export type IncidentStatus = 'Open' | 'InProgress' | 'Resolved';
 export type IncidentType =
   | 'UNMAPPED_OCCUPANCY' | 'ABANDONED_SESSION' | 'EXIT_UNCLOSED'
@@ -33,15 +33,8 @@ export interface VehicleType {
   name: string; // "Ô tô" | "Xe máy" | "Xe tải"
 }
 
-export interface ParkingLot {
-  id: string;
-  name: string;
-  address?: string;
-}
-
 export interface Slot {
   id: string;
-  parkingLotId: string;
   slotCode: string; // F{floor}-{zone}{number}, zone optional → F2-B07 / F2-07
   floor: number;
   zone?: string;
@@ -52,8 +45,6 @@ export interface Slot {
 export interface Reservation {
   reservationId: string;
   userId?: string; // driver who owns this reservation
-  parkingLotId: string;
-  parkingLotName?: string;
   vehicleTypeId: string;
   vehicleTypeName?: string;
   licensePlate: string;
@@ -67,7 +58,6 @@ export interface Reservation {
 export interface ParkingSession {
   sessionId: string;
   reservationId?: string | null; // null for walk-ins
-  parkingLotId: string;
   vehicleTypeId: string;
   vehicleTypeName?: string;
   licensePlate: string;
@@ -95,7 +85,6 @@ export interface Payment {
 
 export interface Incident {
   incidentId: string;
-  parkingLotId: string;
   issueType: IncidentType;
   slotCode?: string;
   sessionId?: string;
@@ -122,15 +111,14 @@ export interface VehicleTypeAvailability {
   byZone: ZoneAvailability[];
 }
 
+/** Tình trạng chỗ trống toàn tòa (1 building) theo loại xe. */
 export interface LotAvailability {
-  parkingLotId: string;
   byVehicleType: VehicleTypeAvailability[];
 }
 
-// ── Admin / quota / occupancy ───────────────────────────────────────────────────
+// ── Admin / quota ───────────────────────────────────────────────────────────────
 export interface BookingQuota {
   quotaId: string;
-  parkingLotId: string;
   vehicleTypeId: string;
   windowStart: string; // "08:00"
   windowEnd: string; // "10:00"
@@ -146,12 +134,36 @@ export interface OccupancyWindow {
   inside: number;
 }
 
+/** Khoảng ngày cho báo cáo (revenue/traffic). */
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+// ── Quản lý tài chính (Manager) ─────────────────────────────────────────────────
+/** Bảng giá theo giờ — mỗi loại xe một mức (v3.1: giá phẳng, không ngày/đêm). */
+export interface PricingPolicy {
+  policyId: string;
+  vehicleTypeId: string;
+  vehicleTypeName: string;
+  hourlyRate: number; // VND/giờ
+  status: 'Active' | 'Expired';
+  effectiveDate: string; // ISO
+}
+
+/** Các chính sách phí cấu hình bởi Manager. */
+export interface FeeConfig {
+  depositPercent: number; // % cọc booking (mặc định 20)
+  overstayRatePerHour: number; // phí quá giờ / giờ
+  noShowGraceMinutes: number; // ân hạn no-show
+  blacklistThreshold: number; // số lần no-show liên tiếp → blacklist
+}
+
 export interface User {
   id: string;
   email: string;
   phone?: string;
   fullName: string;
   role: UserRole;
-  parkingLotId?: string; // Manager/Staff scope
   status?: 'Active' | 'Inactive';
 }

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import { formatDateTime, formatDuration } from '@/lib/utils'
-import { useFindCar } from '@/hooks/useSessionsV2'
+import { useFindCar } from '@/hooks/useSessions'
 import { MOCK_SESSIONS } from './mockData'
 import type { ParkingSession } from '@/types/model'
 

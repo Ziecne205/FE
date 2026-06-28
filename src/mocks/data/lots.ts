@@ -2,7 +2,6 @@
 // Deterministic statuses (no Math.random) so demos/tests are stable.
 import type {
   LotAvailability,
-  ParkingLot,
   Slot,
   SlotStatus,
   VehicleType,
@@ -12,10 +11,6 @@ import type {
 export const VEHICLE_TYPES: VehicleType[] = [
   { id: 'vt-car', name: 'Ô tô' },
   { id: 'vt-moto', name: 'Xe máy' },
-]
-
-export const PARKING_LOTS: ParkingLot[] = [
-  { id: 'lot-1', name: 'Bãi Vinhomes Grand Park', address: 'Q9, TP.HCM' },
 ]
 
 // Mock outstanding (confirmed bookings not yet entered) per vehicle type.
@@ -44,7 +39,7 @@ function deterministicStatus(seq: number): SlotStatus {
   return 'Available'
 }
 
-export function generateSlots(parkingLotId = 'lot-1'): Slot[] {
+export function generateSlots(): Slot[] {
   const slots: Slot[] = []
   let seq = 1
   for (const spec of LAYOUT) {
@@ -53,7 +48,6 @@ export function generateSlots(parkingLotId = 'lot-1'): Slot[] {
       for (let i = 1; i <= spec.perZone; i++) {
         slots.push({
           id: `slot-${seq}`,
-          parkingLotId,
           slotCode: `${floorLabel}-${zone}${i.toString().padStart(2, '0')}`,
           floor: spec.floor,
           zone,
@@ -68,7 +62,7 @@ export function generateSlots(parkingLotId = 'lot-1'): Slot[] {
 }
 
 /** Compute the per-vehicle-type headroom view from a slot snapshot. */
-export function computeAvailability(slots: Slot[], parkingLotId = 'lot-1'): LotAvailability {
+export function computeAvailability(slots: Slot[]): LotAvailability {
   const byVehicleType: VehicleTypeAvailability[] = VEHICLE_TYPES.map((vt) => {
     const typeSlots = slots.filter((s) => s.vehicleTypeId === vt.id)
     const capacity = typeSlots.filter((s) => s.status !== 'Maintenance').length // C
@@ -85,5 +79,5 @@ export function computeAvailability(slots: Slot[], parkingLotId = 'lot-1'): LotA
     return { vehicleTypeName: vt.name, capacity, inside, outstanding, walkInHeadroom, byZone }
   })
 
-  return { parkingLotId, byVehicleType }
+  return { byVehicleType }
 }

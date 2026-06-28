@@ -11,15 +11,14 @@ export interface MockAccount {
   phone: string
   fullName: string
   role: MockRole
-  parkingLotId?: string // Manager/Staff are scoped to a lot
 }
 
 export const DEMO_PASSWORD = '123456'
 
 export const MOCK_USERS: MockAccount[] = [
   { id: 'u-admin', email: 'admin@parking.vn', password: DEMO_PASSWORD, phone: '0900000001', fullName: 'Quản trị viên', role: 'Admin' },
-  { id: 'u-manager', email: 'manager@parking.vn', password: DEMO_PASSWORD, phone: '0900000002', fullName: 'Nguyễn Văn A', role: 'Manager', parkingLotId: 'lot-1' },
-  { id: 'u-staff', email: 'staff@parking.vn', password: DEMO_PASSWORD, phone: '0900000003', fullName: 'Trần Thị B', role: 'Staff', parkingLotId: 'lot-1' },
+  { id: 'u-manager', email: 'manager@parking.vn', password: DEMO_PASSWORD, phone: '0900000002', fullName: 'Nguyễn Văn A', role: 'Manager' },
+  { id: 'u-staff', email: 'staff@parking.vn', password: DEMO_PASSWORD, phone: '0900000003', fullName: 'Trần Thị B', role: 'Staff' },
   { id: 'u-driver', email: 'driver@parking.vn', password: DEMO_PASSWORD, phone: '0901234567', fullName: 'Lê Văn Tài', role: 'Driver' },
 ]
 

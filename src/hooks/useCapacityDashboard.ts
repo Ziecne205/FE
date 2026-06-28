@@ -1,10 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { VehicleTypeAvailability } from '@/types/model';
 import type { CapacityKpiData } from '@/components/capacity-dashboard/types';
-import { useAvailability, useParkingLots } from '@/hooks/useAvailability'
+import { useAvailability } from '@/hooks/useAvailability'
 import { useOpenIncidentCount } from '@/hooks/useIncidents';
+
+/** 1 tòa duy nhất — không còn chọn bãi. */
+const BUILDING_NAME = 'Tòa nhà gửi xe';
 
 interface UseCapacityDashboardReturn {
   lotName: string;
@@ -35,36 +38,25 @@ function computeWarning(types: VehicleTypeAvailability[]): string | null {
 
 /**
  * Capacity dashboard data, wired to the real availability endpoint via React Query
- * (auto-refetches on the global interval). Pass an initial lot id, or it defaults to
- * the first lot returned by GET /api/parking-lots.
+ * (auto-refetches on the global interval). Single building — no lot selector.
  */
-export function useCapacityDashboard(initialLotId?: string): UseCapacityDashboardReturn {
-  const { data: lots } = useParkingLots();
-  const [selectedLotId, setSelectedLotId] = useState<string | undefined>(initialLotId);
-
-  const effectiveLotId = selectedLotId ?? lots?.[0]?.id;
-  const { data: availability, refetch, isFetching, dataUpdatedAt } = useAvailability(effectiveLotId);
-  const { data: openIncidents = 0 } = useOpenIncidentCount(effectiveLotId);
+export function useCapacityDashboard(): UseCapacityDashboardReturn {
+  const { data: availability, refetch, isFetching, dataUpdatedAt } = useAvailability();
+  const { data: openIncidents = 0 } = useOpenIncidentCount();
 
   const vehicleTypes = availability?.byVehicleType ?? [];
   const kpi = useMemo(() => computeKpi(vehicleTypes, openIncidents), [vehicleTypes, openIncidents]);
   const warningMessage = useMemo(() => computeWarning(vehicleTypes), [vehicleTypes]);
-
-  const lotOptions = lots?.map((l) => l.name) ?? [];
-  const selectedLotName = lots?.find((l) => l.id === effectiveLotId)?.name ?? '';
 
   const lastUpdated = dataUpdatedAt
     ? `Cập nhật lúc ${new Date(dataUpdatedAt).toLocaleTimeString('vi-VN')}`
     : 'Đang tải...';
 
   return {
-    lotName: selectedLotName,
-    lotOptions,
-    selectedLot: selectedLotName,
-    onLotChange: (name) => {
-      const match = lots?.find((l) => l.name === name);
-      if (match) setSelectedLotId(match.id);
-    },
+    lotName: BUILDING_NAME,
+    lotOptions: [BUILDING_NAME],
+    selectedLot: BUILDING_NAME,
+    onLotChange: () => {},
     lastUpdated,
     onRefresh: () => void refetch(),
     kpi,

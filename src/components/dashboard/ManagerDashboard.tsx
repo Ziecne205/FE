@@ -5,7 +5,7 @@ import { ParkingCircle, CheckCircle, Car, DollarSign } from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import { formatCurrency } from '@/lib/utils';
 import { REFRESH_INTERVAL } from '@/lib/constants';
-import type { OccupancyStats } from '@/types';
+import type { OccupancyStats } from './types';
 
 interface ManagerDashboardProps {
   stats: OccupancyStats;
@@ -85,12 +85,6 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
               <span className="text-sm text-gray-600">Đã đỗ</span>
               <span className="text-sm font-bold text-red-600">
                 {stats.occupied} ({Math.round((stats.occupied / stats.total_slots) * 100)}%)
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Đã đặt</span>
-              <span className="text-sm font-bold text-yellow-600">
-                {stats.reserved} ({Math.round((stats.reserved / stats.total_slots) * 100)}%)
               </span>
             </div>
             <div className="flex justify-between items-center">

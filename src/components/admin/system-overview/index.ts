@@ -4,4 +4,4 @@ export { LotHeatmapGrid } from './LotHeatmapGrid';
 export { LotCard } from './LotCard';
 export { SystemUsageCurve } from './SystemUsageCurve';
 export { IncidentList } from './IncidentList';
-export type { LotSummary, AdminDashboard, UsagePoint } from './types';
+export type { FloorSummary, AdminDashboard, UsagePoint } from './types';

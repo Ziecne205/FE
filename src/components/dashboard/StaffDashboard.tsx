@@ -5,7 +5,7 @@ import { ParkingCircle, CheckCircle, Car, AlertTriangle, Plus } from 'lucide-rea
 import { StatsCard } from './StatsCard';
 import { Button } from '@/components/ui/button';
 import { REFRESH_INTERVAL } from '@/lib/constants';
-import type { OccupancyStats } from '@/types';
+import type { OccupancyStats } from './types';
 
 interface StaffDashboardProps {
   stats: OccupancyStats;
@@ -147,18 +147,6 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
             />
           </div>
 
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-gray-600">Đã đặt</span>
-            <span className="text-sm font-bold text-yellow-600">
-              {stats.reserved} / {stats.total_slots} ({Math.round((stats.reserved / stats.total_slots) * 100)}%)
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.reserved / stats.total_slots) * 100}%` }}
-            />
-          </div>
         </div>
       </div>
     </div>

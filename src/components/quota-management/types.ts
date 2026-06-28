@@ -23,11 +23,9 @@ export interface QuotaTableProps {
 export interface QuotaFormDialogProps {
   readonly open: boolean
   readonly initialValues?: BookingQuota | null
-  readonly lotId: string
   readonly onClose: () => void
   readonly onSubmit: (values: {
     quotaId?: string
-    parkingLotId: string
     vehicleTypeId: string
     windowStart: string
     windowEnd: string

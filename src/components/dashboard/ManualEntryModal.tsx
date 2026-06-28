@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Slot } from '@/types';
+import type { Slot } from '@/types/model';
 
 // Validation schema
 const manualEntrySchema = z.object({
@@ -125,7 +125,7 @@ export function ManualEntryModal({
                 ) : (
                   availableSlots.map((slot) => (
                     <SelectItem key={slot.id} value={slot.id}>
-                      {slot.slot_name}
+                      {slot.slotCode}
                     </SelectItem>
                   ))
                 )}

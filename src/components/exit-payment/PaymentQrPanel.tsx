@@ -1,16 +1,15 @@
 'use client'
 
-import { Banknote, QrCode, StickerIcon, CheckCircle2, Loader2 } from 'lucide-react'
+import { Banknote, QrCode, CheckCircle2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, formatCurrency } from '@/lib/utils'
-import { PAYMENT_METHOD_LABELS_V2 } from '@/lib/constants'
+import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import type { PaymentMethod } from '@/types/model'
 import type { PaymentQrPanelProps } from './types'
 
 const METHODS: { value: PaymentMethod; icon: React.ReactNode; label: string }[] = [
-  { value: 'Cash', icon: <Banknote className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS_V2.Cash },
-  { value: 'QR', icon: <QrCode className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS_V2.QR },
-  { value: 'WindshieldQR', icon: <StickerIcon className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS_V2.WindshieldQR },
+  { value: 'Cash', icon: <Banknote className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS.Cash },
+  { value: 'QR', icon: <QrCode className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS.QR },
 ]
 
 function QrPlaceholder({ sessionId }: { sessionId: string }) {

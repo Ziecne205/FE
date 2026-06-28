@@ -27,7 +27,6 @@ import type { AppError } from '@/lib/api'
 
 interface CreateReservationModalProps {
   readonly open: boolean
-  readonly parkingLotId: string | undefined
   readonly userId?: string
   readonly canOverride: boolean
   readonly onClose: () => void
@@ -35,7 +34,6 @@ interface CreateReservationModalProps {
 
 export function CreateReservationModal({
   open,
-  parkingLotId,
   userId,
   canOverride,
   onClose,
@@ -63,7 +61,7 @@ export function CreateReservationModal({
 
   const submit = async (override: boolean) => {
     setError(null)
-    if (!parkingLotId || !licensePlate || !vehicleTypeId || !entry || !exit) {
+    if (!licensePlate || !vehicleTypeId || !entry || !exit) {
       setError('Vui lòng nhập đủ thông tin.')
       return
     }
@@ -73,7 +71,6 @@ export function CreateReservationModal({
     }
     try {
       const res = await create.mutateAsync({
-        parkingLotId,
         vehicleTypeId,
         licensePlate,
         expectedEntryTime: entry,

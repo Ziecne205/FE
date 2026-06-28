@@ -8,18 +8,14 @@ import { OccupancyCurve } from './OccupancyCurve'
 import { PeakHoursBars } from './PeakHoursBars'
 import { ReportsTable } from './ReportsTable'
 import { useReports } from '@/hooks/useReports'
-import type { DateRange } from '@/hooks/useOccupancy'
+import type { DateRange } from '@/types/model'
 
 const today = new Date().toISOString().slice(0, 10)
 const weekAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10)
 
-interface ReportsProps {
-  readonly lotId: string | undefined
-}
-
-export function Reports({ lotId }: ReportsProps) {
+export function Reports() {
   const [range, setRange] = useState<DateRange>({ from: weekAgo, to: today })
-  const { revenue, occupancy, isLoading } = useReports(lotId, range)
+  const { revenue, occupancy, isLoading } = useReports(range)
 
   function handleExport() {
     // stub — Opus will wire real export

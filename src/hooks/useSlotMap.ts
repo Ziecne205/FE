@@ -3,34 +3,23 @@
 import { useMemo, useState } from 'react'
 import type { Slot } from '@/types/model'
 import {
-  useAvailability,
   useLotSlots,
-  useParkingLots,
   useSetMaintenance,
   useVehicleTypes,
 } from '@/hooks/useAvailability'
-
-export interface CrashDeficit {
-  vehicleTypeName: string
-  predictedHeadroom: number // negative = deficit
-}
 
 function floorLabel(floor: number): string {
   return floor === -1 ? 'Hầm B1' : `Tầng ${floor}`
 }
 
 /**
- * Slot-map state + logic: floor tabs, maintenance multi-select, single-slot detail,
- * and predictive capacity-crash detection. Wires to the real availability/slots/
- * maintenance endpoints. Defaults to the first lot from GET /api/parking-lots.
+ * Slot-map state + logic: floor tabs, maintenance multi-select, single-slot detail.
+ * Wires to the real slots/maintenance endpoints (single building).
  */
-export function useSlotMap(initialLotId?: string) {
-  const { data: lots } = useParkingLots()
-  const lotId = initialLotId ?? lots?.[0]?.id
-  const { data: slots = [], isLoading } = useLotSlots(lotId)
-  const { data: availability } = useAvailability(lotId)
+export function useSlotMap() {
+  const { data: slots = [], isLoading } = useLotSlots()
   const { data: vehicleTypes = [] } = useVehicleTypes()
-  const setMaintenance = useSetMaintenance(lotId)
+  const setMaintenance = useSetMaintenance()
 
   const [activeFloor, setActiveFloor] = useState<number | null>(null)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
@@ -38,7 +27,6 @@ export function useSlotMap(initialLotId?: string) {
   const [detailCode, setDetailCode] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
-  const [crashDeficits, setCrashDeficits] = useState<CrashDeficit[] | null>(null)
 
   const vtName = useMemo(
     () => Object.fromEntries(vehicleTypes.map((v) => [v.id, v.name])),
@@ -80,26 +68,6 @@ export function useSlotMap(initialLotId?: string) {
     [slots, detailCode],
   )
 
-  /** Predict per-type headroom if the selected Available slots become Maintenance. */
-  function predictCrash(slotCodes: string[]): CrashDeficit[] {
-    const selectedSlots = slots.filter(
-      (s) => slotCodes.includes(s.slotCode) && s.status === 'Available',
-    )
-    const reducedByType = new Map<string, number>()
-    for (const s of selectedSlots) {
-      const name = vtName[s.vehicleTypeId] ?? s.vehicleTypeId
-      reducedByType.set(name, (reducedByType.get(name) ?? 0) + 1)
-    }
-    const deficits: CrashDeficit[] = []
-    for (const [name, reduced] of reducedByType) {
-      const current = availability?.byVehicleType.find((t) => t.vehicleTypeName === name)
-      if (!current) continue
-      const predicted = current.walkInHeadroom - reduced
-      if (predicted < 0) deficits.push({ vehicleTypeName: name, predictedHeadroom: predicted })
-    }
-    return deficits
-  }
-
   function enterMaintenanceMode(on: boolean) {
     setMaintenanceMode(on)
     setSelected(new Set())
@@ -114,20 +82,10 @@ export function useSlotMap(initialLotId?: string) {
     })
   }
 
-  /** Step 1: from the action panel — check for crash, else apply directly. */
+  /** Apply maintenance lock to the selected slots. */
   function requestLock() {
     const codes = Array.from(selected)
     if (!codes.length) return
-    const deficits = predictCrash(codes)
-    if (deficits.length) {
-      setCrashDeficits(deficits)
-    } else {
-      applyLock(codes)
-    }
-  }
-
-  /** Step 2: confirmed (or no crash) — call the API. */
-  function applyLock(codes: string[]) {
     setMaintenance.mutate(
       { slotCodes: codes, maintenance: true },
       {
@@ -135,7 +93,6 @@ export function useSlotMap(initialLotId?: string) {
           setSelected(new Set())
           setReason('')
           setNotes('')
-          setCrashDeficits(null)
         },
       },
     )
@@ -150,7 +107,6 @@ export function useSlotMap(initialLotId?: string) {
   }
 
   return {
-    lotId,
     isLoading,
     floors,
     floorLabel,
@@ -174,8 +130,5 @@ export function useSlotMap(initialLotId?: string) {
     setNotes,
     requestLock,
     isLocking: setMaintenance.isPending,
-    crashDeficits,
-    confirmCrashLock: () => crashDeficits && applyLock(Array.from(selected)),
-    cancelCrash: () => setCrashDeficits(null),
   }
 }

@@ -1,6 +1,7 @@
-export interface LotSummary {
-  parkingLotId: string;
-  name: string;
+// Admin overview — single building, summarised per FLOOR (multi-lot removed v3.1).
+export interface FloorSummary {
+  floorId: string;
+  floorName: string;
   capacity: number;
   inside: number;
   outstanding: number;
@@ -11,7 +12,7 @@ export interface LotSummary {
 }
 
 export interface AdminDashboard {
-  lots: LotSummary[];
+  floors: FloorSummary[];
   totals: {
     capacity: number;
     inside: number;

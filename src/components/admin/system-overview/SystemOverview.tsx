@@ -5,11 +5,7 @@ import { SystemUsageCurve } from './SystemUsageCurve';
 import { IncidentList } from './IncidentList';
 import { mockUsageCurve } from './mockData';
 
-interface Props {
-  readonly onDrillDown?: (lotId: string) => void;
-}
-
-export function SystemOverview({ onDrillDown }: Props) {
+export function SystemOverview() {
   const { data, isLoading } = useAdminDashboard();
 
   if (isLoading) {
@@ -29,7 +25,7 @@ export function SystemOverview({ onDrillDown }: Props) {
           <IncidentList />
         </div>
         <div className="lg:col-span-8">
-          <LotHeatmapGrid lots={data.lots} onDrillDown={onDrillDown} />
+          <LotHeatmapGrid floors={data.floors} />
         </div>
       </div>
 

@@ -15,22 +15,19 @@ import { IncidentStatsBar } from './IncidentStatsBar'
 import { IncidentTable } from './IncidentTable'
 import { ResolveIncidentDialog } from './ResolveIncidentDialog'
 import { useIncidents, useResolveIncident } from '@/hooks/useIncidents'
-import { useParkingLots } from '@/hooks/useAvailability'
 import { useAuthStore } from '@/store'
 import { INCIDENT_TYPE_LABELS } from '@/lib/constants'
 import type { Incident, IncidentStatus, IncidentType } from '@/types/model'
 
 export function Incidents() {
   const { user } = useAuthStore()
-  const { data: lots } = useParkingLots()
-  const lotId = lots?.[0]?.id
 
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<IncidentType | 'all'>('all')
   const [search, setSearch] = useState('')
   const [resolving, setResolving] = useState<Incident | null>(null)
 
-  const { data: incidents = [], isLoading, refetch } = useIncidents({ lotId })
+  const { data: incidents = [], isLoading, refetch } = useIncidents({})
   const resolveIncident = useResolveIncident()
 
   const filtered = useMemo(

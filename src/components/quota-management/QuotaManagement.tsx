@@ -8,10 +8,8 @@ import { buildGroups } from './mockData'
 import { QuotaTable } from './QuotaTable'
 import { QuotaFormDialog } from './QuotaFormDialog'
 
-const LOT_ID = 'lot-1' // TODO(opus): accept as prop or read from context
-
 export function QuotaManagement() {
-  const { data: quotas = [], isLoading } = useQuotas(LOT_ID)
+  const { data: quotas = [], isLoading } = useQuotas()
   const upsertQuota = useUpsertQuota()
   const toggleQuota = useToggleQuota()
 
@@ -87,7 +85,6 @@ export function QuotaManagement() {
       <QuotaFormDialog
         open={dialogOpen}
         initialValues={editTarget}
-        lotId={LOT_ID}
         onClose={handleClose}
         onSubmit={handleSubmit}
         isSubmitting={upsertQuota.isPending}

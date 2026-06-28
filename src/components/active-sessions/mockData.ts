@@ -3,7 +3,6 @@ import type { ParkingSession } from '@/types/model'
 export const MOCK_SESSIONS: ParkingSession[] = [
   {
     sessionId: 'S001',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-01',
     vehicleTypeName: 'Ô tô',
     licensePlate: '51A-12345',
@@ -16,7 +15,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   },
   {
     sessionId: 'S002',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-02',
     vehicleTypeName: 'Xe máy',
     licensePlate: '59B-67890',
@@ -27,7 +25,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   },
   {
     sessionId: 'S003',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-01',
     vehicleTypeName: 'Ô tô',
     licensePlate: '30H-11111',
@@ -41,7 +38,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   },
   {
     sessionId: 'S004',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-01',
     vehicleTypeName: 'Ô tô',
     licensePlate: '43A-55555',
@@ -56,7 +52,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   },
   {
     sessionId: 'S005',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-02',
     vehicleTypeName: 'Xe máy',
     licensePlate: '79K-22222',
@@ -68,7 +63,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   {
     sessionId: 'S006',
     reservationId: 'R-009',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-01',
     vehicleTypeName: 'Ô tô',
     licensePlate: '51F-99888',
@@ -81,7 +75,6 @@ export const MOCK_SESSIONS: ParkingSession[] = [
   },
   {
     sessionId: 'S007',
-    parkingLotId: 'LOT-01',
     vehicleTypeId: 'VT-02',
     vehicleTypeName: 'Xe máy',
     licensePlate: '29A-33344',

@@ -5,7 +5,6 @@ import { SlotStatsBar } from './SlotStatsBar'
 import { ZoneSection } from './ZoneSection'
 import { SlotDetailPanel } from './SlotDetailPanel'
 import { MaintenancePanel } from './MaintenancePanel'
-import { CapacityCrashDialog } from './CapacityCrashDialog'
 import { useSlotMap } from '@/hooks/useSlotMap'
 import type { Slot } from '@/types/model'
 
@@ -92,13 +91,6 @@ export function SlotMap() {
           )}
         </aside>
       </div>
-
-      <CapacityCrashDialog
-        deficits={map.crashDeficits}
-        isLocking={map.isLocking}
-        onConfirm={map.confirmCrashLock}
-        onCancel={map.cancelCrash}
-      />
     </div>
   )
 }

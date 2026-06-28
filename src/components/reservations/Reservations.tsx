@@ -16,7 +16,6 @@ import { ReservationTable } from './ReservationTable'
 import { CreateReservationModal } from './CreateReservationModal'
 import { CancelReservationDialog } from './CancelReservationDialog'
 import { useReservations, useCancelReservation } from '@/hooks/useReservations'
-import { useParkingLots } from '@/hooks/useAvailability'
 import { useAuthStore } from '@/store'
 import { RESERVATION_STATUS_LABELS } from '@/lib/constants'
 import type { Reservation, ReservationStatus } from '@/types/model'
@@ -24,15 +23,13 @@ import type { Reservation, ReservationStatus } from '@/types/model'
 export function Reservations() {
   const { user } = useAuthStore()
   const isManager = user?.role === 'Manager'
-  const { data: lots } = useParkingLots()
-  const lotId = lots?.[0]?.id
 
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [cancelling, setCancelling] = useState<Reservation | null>(null)
 
-  const { data: reservations = [], isLoading, refetch } = useReservations({ lotId })
+  const { data: reservations = [], isLoading, refetch } = useReservations({})
   const cancelReservation = useCancelReservation()
 
   const filtered = useMemo(
@@ -106,7 +103,6 @@ export function Reservations() {
 
       <CreateReservationModal
         open={createOpen}
-        parkingLotId={lotId}
         userId={user?.id}
         canOverride={isManager}
         onClose={() => setCreateOpen(false)}

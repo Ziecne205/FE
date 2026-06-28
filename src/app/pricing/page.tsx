@@ -1,12 +1,12 @@
 'use client'
 
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
-import { Reports } from '@/components/reports'
+import { PricingManagement } from '@/components/pricing'
 
-export default function ReportsPage() {
+export default function PricingPage() {
   return (
     <ProtectedLayout>
-      <Reports />
+      <PricingManagement />
     </ProtectedLayout>
   )
 }

@@ -4,13 +4,11 @@ import { api, type AppError } from '@/lib/api'
 import type { Incident, IncidentStatus } from '@/types/model'
 
 export interface IncidentFilter {
-  lotId?: string
   status?: IncidentStatus | 'all'
 }
 
-function buildQuery({ lotId, status }: IncidentFilter): string {
+function buildQuery({ status }: IncidentFilter): string {
   const params = new URLSearchParams()
-  if (lotId) params.set('lotId', lotId)
   if (status && status !== 'all') params.set('status', status)
   const qs = params.toString()
   return qs ? `?${qs}` : ''
@@ -18,17 +16,16 @@ function buildQuery({ lotId, status }: IncidentFilter): string {
 
 export function useIncidents(filter: IncidentFilter = {}) {
   return useQuery({
-    queryKey: ['incidents', filter.lotId ?? null, filter.status ?? 'all'],
+    queryKey: ['incidents', filter.status ?? 'all'],
     queryFn: () => api.get<Incident[]>(`/incidents${buildQuery(filter)}`),
   })
 }
 
-/** Open-incident count for a lot — feeds the dashboard "Sự cố đang mở" KPI. */
-export function useOpenIncidentCount(lotId: string | undefined) {
+/** Open-incident count — feeds the dashboard "Sự cố đang mở" KPI. */
+export function useOpenIncidentCount() {
   return useQuery({
-    queryKey: ['incidents', lotId ?? null, 'Open'],
-    queryFn: () => api.get<Incident[]>(`/incidents${buildQuery({ lotId, status: 'Open' })}`),
-    enabled: !!lotId,
+    queryKey: ['incidents', 'Open'],
+    queryFn: () => api.get<Incident[]>(`/incidents${buildQuery({ status: 'Open' })}`),
     select: (list) => list.length,
   })
 }
