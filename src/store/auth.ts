@@ -36,11 +36,11 @@ interface AuthState {
   isLoading: boolean
   login: (username: string, password: string) => Promise<void>
   register: (fields: {
+    username: string
     fullName: string
-    phone: string
-    email: string
+    phone?: string
+    email?: string
     password: string
-    licensePlate?: string
   }) => Promise<void>
   logout: () => void
   setUser: (user: User) => void
@@ -100,10 +100,9 @@ export const useAuthStore = create<AuthState>()(
       register: async (fields) => {
         set({ isLoading: true })
         try {
-          // BE RegisterRequest: { username, password, fullName, phoneNumber, email, roleName }.
-          // Tạm dùng email làm username (form Driver chưa có field username riêng).
+          // BE RegisterRequest: { username, password, fullName, phoneNumber?, email?, roleName }.
           const res = await api.post<LoginResponse>('/auth/register', {
-            username: fields.email,
+            username: fields.username,
             password: fields.password,
             fullName: fields.fullName,
             phoneNumber: fields.phone,

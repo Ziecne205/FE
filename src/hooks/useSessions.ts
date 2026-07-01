@@ -73,3 +73,27 @@ export function useFindCar(plate: string): { data: ParkingSession | null } {
   })
   return { data: query.data ?? null }
 }
+
+export interface StaffForceCheckInInput {
+  sessionId: string | number
+  actualPlate: string
+  reason?: string
+}
+
+/**
+ * Audited staff force check-in — POST /staff/sessions/{id}/force-check-in.
+ * Overwrites the plate on the session (and reservation if any), sets isForceCheckIn=true,
+ * writes an AuditLog entry (STAFF_FORCE_CHECK_IN). This is distinct from the
+ * hardware simulator's /gate/force-checkin which has no audit trail.
+ */
+export function useStaffForceCheckIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sessionId, actualPlate, reason }: StaffForceCheckInInput) =>
+      api.post(`/staff/sessions/${sessionId}/force-check-in`, { actualPlate, reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
+}
