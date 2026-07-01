@@ -47,10 +47,12 @@ export interface ResolveIncidentInput {
 export function useResolveIncident() {
   const queryClient = useQueryClient()
   return useMutation({
-    // BE: PATCH /staff/incidents/{id}/resolve — body là CHUỖI thô (resolutionNotes),
-    // không phải JSON object. api.patch sẽ JSON.stringify("...") → hợp lệ với @RequestBody String.
-    mutationFn: ({ incidentId, resolutionNotes }: ResolveIncidentInput) =>
-      api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve`, resolutionNotes ?? ''),
+    // BE: PATCH /staff/incidents/{id}/resolve?resolutionNotes= (query param, not request body).
+    // The controller uses @RequestParam String resolutionNotes — DO NOT send a body.
+    mutationFn: ({ incidentId, resolutionNotes }: ResolveIncidentInput) => {
+      const qs = resolutionNotes ? `?resolutionNotes=${encodeURIComponent(resolutionNotes)}` : ''
+      return api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve${qs}`)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
       toast.success('Đã xử lý sự cố')

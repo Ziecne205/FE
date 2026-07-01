@@ -5,7 +5,7 @@
 
 // ── Status labels (text as returned by API; service maps INT↔label) ─────────────
 export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserved
-export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Abandoned';
+export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception';
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
 
@@ -74,6 +74,8 @@ export interface ParkingSession {
   totalFee?: number;
   isPaid: boolean;
   status: SessionStatus;
+  isForceCheckIn?: boolean; // staff overrode a plate mismatch at check-in
+  isOverstay?: boolean;     // session ran past the 24-hour overstay grace period
 }
 
 export interface Payment {

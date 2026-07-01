@@ -57,6 +57,8 @@ export interface BeActiveSession {
   hasReservation: boolean
   hasCard: boolean
   parkedMinutes: number
+  isForceCheckIn?: boolean | null  // staff overrode plate mismatch
+  isOverstay?: boolean | null      // session exceeded 24h grace period
 }
 
 export interface BeIncident {
@@ -136,6 +138,40 @@ export interface BeParkingInfo {
   }>
 }
 
+/**
+ * Shape returned by GET /manager/availability — matches LotAvailability directly.
+ * (Different from the public /driver/parking-info which uses BeParkingInfo above.)
+ */
+export interface BeManagerAvailability {
+  byVehicleType: Array<{
+    vehicleTypeName: string
+    capacity: number
+    inside: number
+    outstanding: number
+    walkInHeadroom: number
+    byZone: Array<{ zone: string; available: number }>
+  }>
+}
+
+/** Floor DTO from /manager/floors */
+export interface BeFloor {
+  floorId: number
+  floorName: string
+  dedicatedVehicleTypeId?: number | null
+  totalCapacity?: number | null
+}
+
+/** CheckOut response now includes isOverstay from the backend */
+export interface BeCheckOutResponse {
+  sessionId: number
+  amount: number
+  paymentStatus: string
+  paymentMethod: string
+  plateMismatch: boolean
+  slotFreed?: string | null
+  isOverstay?: boolean | null
+}
+
 export interface BeRevenueReport {
   fromDate: string
   toDate: string
@@ -199,6 +235,8 @@ export function mapActiveSession(s: BeActiveSession): ParkingSession {
     entryTime: s.entryTime,
     isPaid: false,
     status: s.status as SessionStatus,
+    isForceCheckIn: s.isForceCheckIn ?? undefined,
+    isOverstay: s.isOverstay ?? undefined,
   }
 }
 
@@ -273,4 +311,13 @@ export function mapAvailability(info: BeParkingInfo): LotAvailability {
       byZone: [],
     })),
   }
+}
+
+/**
+ * Passthrough: GET /manager/availability already returns the canonical
+ * LotAvailability shape (capacity, inside, outstanding, walkInHeadroom, byZone).
+ * No mapping needed — cast directly.
+ */
+export function mapManagerAvailability(raw: BeManagerAvailability): LotAvailability {
+  return raw as LotAvailability
 }

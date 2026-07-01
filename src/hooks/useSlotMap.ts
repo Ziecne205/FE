@@ -27,6 +27,8 @@ export function useSlotMap() {
   const [detailCode, setDetailCode] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
+  // pendingLock: codes queued for maintenance, waiting for capacity-crash confirmation
+  const [pendingLock, setPendingLock] = useState<string[] | null>(null)
 
   const vtName = useMemo(
     () => Object.fromEntries(vehicleTypes.map((v) => [v.id, v.name])),
@@ -82,20 +84,35 @@ export function useSlotMap() {
     })
   }
 
-  /** Apply maintenance lock to the selected slots. */
+  /**
+   * Stage maintenance lock: shows the capacity-crash warning modal instead of
+   * immediately firing the API. Call confirmLock() after the user accepts.
+   */
   function requestLock() {
     const codes = Array.from(selected)
     if (!codes.length) return
+    setPendingLock(codes)
+  }
+
+  /** User confirmed the capacity-crash warning — fire the API now. */
+  function confirmLock() {
+    if (!pendingLock?.length) return
     setMaintenance.mutate(
-      { slotCodes: codes, maintenance: true },
+      { slotCodes: pendingLock, maintenance: true },
       {
         onSuccess: () => {
           setSelected(new Set())
           setReason('')
           setNotes('')
+          setPendingLock(null)
         },
+        onError: () => setPendingLock(null),
       },
     )
+  }
+
+  function clearPendingLock() {
+    setPendingLock(null)
   }
 
   /** Single-slot toggle from the detail panel. */
@@ -129,6 +146,9 @@ export function useSlotMap() {
     notes,
     setNotes,
     requestLock,
+    confirmLock,
+    clearPendingLock,
+    pendingLock,
     isLocking: setMaintenance.isPending,
   }
 }

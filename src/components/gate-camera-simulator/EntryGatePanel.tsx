@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useEntryScan, useForceCheckin } from '@/hooks/useGateSim'
+import { useStaffForceCheckIn } from '@/hooks/useSessions'
 import type { EntryGatePanelProps, EntryState, EventLogEntry } from './types'
 
 function mkEvent(partial: Omit<EventLogEntry, 'id' | 'ts'>): EventLogEntry {
@@ -13,9 +14,13 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
   const [state, setState] = useState<EntryState>('IDLE')
   const [scannedPlate, setScannedPlate] = useState('30G-123.45')
   const [manualPlate, setManualPlate] = useState('')
+  const [forceReason, setForceReason] = useState('')
+  // sessionId returned by the gate entry scan (needed for the audited force-check-in)
+  const [pendingSessionId, setPendingSessionId] = useState<number | null>(null)
 
   const entryScan = useEntryScan(failureRate)
-  const forceCheckin = useForceCheckin()
+  const forceCheckin = useForceCheckin()         // sim-only: /gate/force-checkin (no audit)
+  const staffForceCheckIn = useStaffForceCheckIn() // audited: /staff/sessions/{id}/force-check-in
 
   async function handleScan() {
     setState('SCANNING')
@@ -34,6 +39,8 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
         onEvent(mkEvent({ kind: 'ERROR', message: 'Quét thất bại — nhập tay biển số.', plate: scannedPlate }))
       } else if (result.reason === 'PLATE_MISMATCH') {
         setState('PLATE_MISMATCH')
+        // Store the sessionId so staff can call the audited force-check-in
+        if (result.sessionId) setPendingSessionId(result.sessionId)
         onEvent(mkEvent({ kind: 'ERROR', message: 'Biển số không khớp đặt chỗ.', plate: scannedPlate }))
       } else if (result.reason === 'FULL') {
         setState('FULL')
@@ -95,9 +102,11 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
   function handleReset() {
     setState('IDLE')
     setManualPlate('')
+    setForceReason('')
+    setPendingSessionId(null)
   }
 
-  const isLoading = entryScan.isPending || forceCheckin.isPending
+  const isLoading = entryScan.isPending || forceCheckin.isPending || staffForceCheckIn.isPending
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
@@ -217,7 +226,7 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
           </div>
         )}
 
-        {/* Plate mismatch — offer force check-in */}
+        {/* Plate mismatch — audited staff force check-in */}
         {state === 'PLATE_MISMATCH' && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex flex-col gap-2">
             <p className="text-sm font-semibold text-orange-800 flex items-center gap-1">
@@ -225,13 +234,38 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
               Biển số không khớp đặt chỗ
             </p>
             <p className="text-xs text-orange-700">Biển số <span className="font-mono font-bold">{scannedPlate}</span> không tìm thấy đặt chỗ tương ứng.</p>
+            <p className="text-xs text-gray-600">Nhân viên có thể ghi đè (hành động sẽ được ghi vào audit log):</p>
+            <textarea
+              value={forceReason}
+              onChange={(e) => setForceReason(e.target.value)}
+              placeholder="Lý do ghi đè (tuỳ chọn)…"
+              rows={2}
+              disabled={isLoading}
+              className="w-full border border-orange-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+            />
             <button
-              onClick={handleForceCheckin}
+              onClick={async () => {
+                if (!pendingSessionId) {
+                  toast.error('Không tìm thấy phiên cần ghi đè.')
+                  return
+                }
+                try {
+                  await staffForceCheckIn.mutateAsync({
+                    sessionId: pendingSessionId,
+                    actualPlate: scannedPlate,
+                    reason: forceReason || undefined,
+                  })
+                  setState('ADMITTED')
+                  onEvent(mkEvent({ kind: 'FORCE', message: `Ghi đè biển số (có audit): ${scannedPlate}`, plate: scannedPlate }))
+                } catch {
+                  toast.error('Ghi đè thất bại.')
+                }
+              }}
               disabled={isLoading}
               className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
             >
-              <span className="material-symbols-outlined text-sm">qr_code_scanner</span>
-              Force Check-in (QR)
+              <span className="material-symbols-outlined text-sm">edit_note</span>
+              Ghi đè biển số (Có audit log)
             </button>
             <button onClick={handleReset} className="text-xs text-gray-500 hover:underline text-center">Huỷ / Thử lại</button>
           </div>
