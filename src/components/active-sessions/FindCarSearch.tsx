@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import { formatDateTime, formatDuration } from '@/lib/utils'
 import { useFindCar } from '@/hooks/useSessions'
-import { MOCK_SESSIONS } from './mockData'
-import type { ParkingSession } from '@/types/model'
+import { useNow } from '@/hooks/useNow'
 
 const STATUS_COLORS: Record<string, string> = {
   Admitted: 'bg-amber-100 text-amber-800',
@@ -23,17 +22,8 @@ export function FindCarSearch() {
   const [input, setInput] = useState('')
   const [submitted, setSubmitted] = useState('')
 
-  // Hook stub (Opus replaces body); for now fall back to mock
-  const { data: apiResult } = useFindCar(submitted)
-
-  const mockResult: ParkingSession | null =
-    submitted.length >= 2
-      ? (MOCK_SESSIONS.find((s) =>
-          s.licensePlate.toLowerCase().includes(submitted.toLowerCase()),
-        ) ?? null)
-      : null
-
-  const result = apiResult ?? mockResult
+  const { data: result } = useFindCar(submitted)
+  const now = useNow()
 
   const handleSearch = () => setSubmitted(input.trim())
   const handleClear = () => {
@@ -88,8 +78,8 @@ export function FindCarSearch() {
                   <span>Ô gợi ý: <span className="font-mono text-gray-700">{result.assignedSlotCode}</span></span>
                 )}
                 <span>Vào lúc: {formatDateTime(result.entryTime)}</span>
-                {result.parkedTime && (
-                  <span>Đỗ: {formatDuration(Math.floor((Date.now() - new Date(result.parkedTime).getTime()) / 60000))}</span>
+                {result.parkedTime && now !== null && (
+                  <span>Đỗ: {formatDuration(Math.floor((now - new Date(result.parkedTime).getTime()) / 60000))}</span>
                 )}
                 {result.vehicleTypeName && (
                   <span>Loại xe: {result.vehicleTypeName}</span>
