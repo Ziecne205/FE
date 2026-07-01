@@ -10,36 +10,23 @@ import { PaymentQrPanel } from './PaymentQrPanel'
 import { FeedbackForm } from './FeedbackForm'
 import type { ExitPaymentProps, FeeBreakdownLine, PaymentMethod } from './types'
 
-const DAY_RATE = 10000   // VND/h  06:00–18:00
-const NIGHT_RATE = 15000 // VND/h  18:00–06:00
-const SURCHARGE = 5000
-
-function computeBreakdown(entryTime: string): FeeBreakdownLine[] {
+function computeBreakdown(entryTime: string, totalFee: number): FeeBreakdownLine[] {
   const entry = new Date(entryTime)
   const now = new Date()
   const totalMinutes = Math.max(0, Math.floor((now.getTime() - entry.getTime()) / 60000))
   const totalHours = Math.ceil(totalMinutes / 60)
 
-  // Simple split: hours within 06-18 are day rate, rest night
-  let dayHours = 0
-  let nightHours = 0
-  for (let i = 0; i < totalHours; i++) {
-    const h = new Date(entry.getTime() + i * 3600000).getHours()
-    if (h >= 6 && h < 18) dayHours++
-    else nightHours++
-  }
-
-  const lines: FeeBreakdownLine[] = []
-  if (dayHours > 0) {
-    lines.push({ label: 'Ban ngày (06:00–18:00)', hours: dayHours, ratePerHour: DAY_RATE, subtotal: dayHours * DAY_RATE })
-  }
-  if (nightHours > 0) {
-    lines.push({ label: 'Ban đêm (18:00–06:00)', hours: nightHours, ratePerHour: NIGHT_RATE, subtotal: nightHours * NIGHT_RATE })
-  }
-  if (lines.length > 0) {
-    lines.push({ label: 'Phụ phí/Làm tròn', hours: 0, ratePerHour: 0, subtotal: SURCHARGE })
-  }
-  return lines
+  // Aligning with BE formula: Base + (ExtraHour × hours)
+  // Since BE returns the final totalFee, we display a simplified breakdown
+  // rather than re-computing the exact split which caused FE/BE drift.
+  return [
+    {
+      label: 'Phí đỗ xe (Theo chính sách giá)',
+      hours: totalHours,
+      ratePerHour: 0, // Hidden in UI if 0
+      subtotal: totalFee,
+    },
+  ]
 }
 
 export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: ExitPaymentProps) {
@@ -51,7 +38,7 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
   const { mutate, isPending } = usePayParking()
 
   const durationMinutes = calculateDuration(entryTime)
-  const breakdown = computeBreakdown(entryTime)
+  const breakdown = computeBreakdown(entryTime, totalFee)
 
   function handleConfirm() {
     // Check-out thật theo biển số; BE trả về số tiền đã tính để hiển thị biên nhận.

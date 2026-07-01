@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware'
 import type { User, UserRole } from '@/types/model'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import { setToken } from '@/lib/authToken'
 
 /** BE `LoginResponse` (AuthController) — the only fields login/register return. */
 interface LoginResponse {
@@ -57,7 +56,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true })
         try {
           const res = await api.post<LoginResponse>('/auth/login', { username, password })
-          setToken(res.token)
           const role = mapRole(res.roleName)
           let loggedUser: User = {
             id: res.username,
@@ -109,7 +107,6 @@ export const useAuthStore = create<AuthState>()(
             email: fields.email,
             roleName: 'Driver',
           })
-          setToken(res.token)
           const registeredUser: User = {
             id: res.username,
             email: fields.email,
@@ -128,7 +125,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        setToken(null)
         set({ user: null, isAuthenticated: false })
         toast.success('Đăng xuất thành công')
       },

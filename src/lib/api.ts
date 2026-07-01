@@ -1,7 +1,6 @@
 // Single API seam. Components/hooks call apiFetch — switching from MSW mocks to the
 // real Spring Boot backend is just setting NEXT_PUBLIC_API_BASE (no component changes).
 import { normalizeSpringBootError, type AppError } from './errors'
-import { getToken } from './authToken'
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api'
 
@@ -36,15 +35,13 @@ function isEnvelope(p: unknown): p is Envelope {
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
-  const token = getToken()
-
   let res: Response
   try {
     res = await fetch(url, {
       ...rest,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(headers ?? {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
