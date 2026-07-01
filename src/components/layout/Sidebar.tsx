@@ -4,31 +4,43 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
+  Gauge,
   Map,
   Car,
   Calendar,
   AlertTriangle,
   BarChart3,
-  Settings,
   HelpCircle,
   LogOut,
   Plus,
+  Sliders,
+  CreditCard,
+  Cctv,
+  DollarSign,
+  Users,
+  Shield,
+  Settings,
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import type { UserRole } from '@/types/model';
 
 interface SidebarProps {
-  userRole: 'Manager' | 'Staff';
+  userRole: UserRole;
   onNewEntry?: () => void;
   onLogout?: () => void;
 }
 
 const managerNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
+  { href: '/capacity', icon: Gauge, label: 'Sức chứa' },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
   { href: '/bookings', icon: Calendar, label: 'Đặt chỗ' },
-  { href: '/exceptions', icon: AlertTriangle, label: 'Ngoại lệ' },
+  { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
+  { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
+  { href: '/pricing', icon: DollarSign, label: 'Quản lý giá' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
 ];
 
@@ -36,12 +48,28 @@ const staffNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
-  { href: '/exceptions', icon: AlertTriangle, label: 'Ngoại lệ' },
+  { href: '/exit-payment', icon: CreditCard, label: 'Thanh toán' },
+  { href: '/simulator', icon: Cctv, label: 'Mô phỏng Cổng' },
+  { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
+];
+
+// Phân hệ Quản trị viên — chỉ Admin thấy (gắn thêm vào sau nav của Manager).
+const adminNavItems = [
+  { href: '/admin/users', icon: Users, label: 'Tài khoản' },
+  { href: '/admin/rbac', icon: Shield, label: 'Phân quyền' },
+  { href: '/admin/system-config', icon: Settings, label: 'Cấu hình hệ thống' },
+  { href: '/admin/audit-logs', icon: ScrollText, label: 'Nhật ký' },
 ];
 
 export function Sidebar({ userRole, onNewEntry, onLogout }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = userRole === 'Manager' ? managerNavItems : staffNavItems;
+  // Staff: nav vận hành. Manager: nav quản lý. Admin (superset): nav quản lý + phân hệ quản trị.
+  const navItems =
+    userRole === 'Staff'
+      ? staffNavItems
+      : userRole === 'Admin'
+        ? [...managerNavItems, ...adminNavItems]
+        : managerNavItems;
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 h-full flex-col p-4 z-40 w-[280px] bg-gray-50 border-r border-gray-200">

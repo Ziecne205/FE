@@ -5,7 +5,7 @@ import { ParkingCircle, CheckCircle, Car, AlertTriangle, Plus } from 'lucide-rea
 import { StatsCard } from './StatsCard';
 import { Button } from '@/components/ui/button';
 import { REFRESH_INTERVAL } from '@/lib/constants';
-import type { OccupancyStats } from '@/types';
+import type { OccupancyStats } from './types';
 
 interface StaffDashboardProps {
   stats: OccupancyStats;
@@ -124,41 +124,29 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Trống</span>
             <span className="text-sm font-bold text-green-600">
-              {stats.available} / {stats.total_slots} ({Math.round((stats.available / stats.total_slots) * 100)}%)
+              {stats.available} / {stats.total_slots} ({Math.round((stats.available / (stats.total_slots || 1)) * 100)}%)
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-green-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.available / stats.total_slots) * 100}%` }}
+              style={{ width: `${(stats.available / (stats.total_slots || 1)) * 100}%` }}
             />
           </div>
 
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-600">Đã đỗ</span>
             <span className="text-sm font-bold text-red-600">
-              {stats.occupied} / {stats.total_slots} ({Math.round((stats.occupied / stats.total_slots) * 100)}%)
+              {stats.occupied} / {stats.total_slots} ({Math.round((stats.occupied / (stats.total_slots || 1)) * 100)}%)
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-red-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.occupied / stats.total_slots) * 100}%` }}
+              style={{ width: `${(stats.occupied / (stats.total_slots || 1)) * 100}%` }}
             />
           </div>
 
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-gray-600">Đã đặt</span>
-            <span className="text-sm font-bold text-yellow-600">
-              {stats.reserved} / {stats.total_slots} ({Math.round((stats.reserved / stats.total_slots) * 100)}%)
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.reserved / stats.total_slots) * 100}%` }}
-            />
-          </div>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store'
 import { DashboardLayout as BaseDashboardLayout } from '@/components/layout/DashboardLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { canAccess, roleHome } from '@/lib/roles'
 
 interface ProtectedLayoutProps {
   children: ReactNode
@@ -12,11 +13,21 @@ interface ProtectedLayoutProps {
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Tổng quan',
+  '/capacity': 'Bảng điều khiển Sức chứa',
   '/slots': 'Sơ đồ chỗ đỗ',
   '/sessions': 'Phiên đỗ xe',
   '/bookings': 'Quản lý đặt chỗ',
+  '/incidents': 'Sự cố',
   '/exceptions': 'Xử lý ngoại lệ',
+  '/quota': 'Hạn mức đặt chỗ',
+  '/pricing': 'Quản lý giá',
   '/reports': 'Báo cáo',
+  '/exit-payment': 'Thanh toán cổng ra',
+  '/simulator': 'Mô phỏng Cổng & Camera',
+  '/admin/users': 'Quản lý tài khoản',
+  '/admin/rbac': 'Phân quyền',
+  '/admin/system-config': 'Cấu hình hệ thống',
+  '/admin/audit-logs': 'Nhật ký hệ thống',
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
@@ -24,14 +35,19 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthStore()
 
+  const allowed = !!user && canAccess(user.role, pathname)
+
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login')
+      router.replace('/login')
+    } else if (user && !canAccess(user.role, pathname)) {
+      // Authenticated but wrong role for this route → send to the role's home.
+      router.replace(roleHome[user.role])
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user, pathname, router])
 
-  // Show loading while checking auth or if not authenticated
-  if (!isAuthenticated || !user) {
+  // Show loading while checking auth, if not authenticated, or while redirecting a disallowed role.
+  if (!isAuthenticated || !user || !allowed) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">

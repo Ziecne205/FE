@@ -36,6 +36,16 @@ export interface SpringBootError {
 }
 
 /**
+ * Authoritative API error envelope (APIs-List.md §0).
+ * Example: { success: false, message: "Khung giờ đã khóa đặt chỗ", errorCode: "QUOTA_FULL" }
+ */
+export interface ApiEnvelopeError {
+  success: false
+  message: string
+  errorCode: string
+}
+
+/**
  * Spring Boot validation error format
  * Used for @Valid annotation failures
  */
@@ -78,6 +88,8 @@ export const ErrorCodes = {
   BOOKING_EXPIRED: 'BOOKING_EXPIRED',
   SESSION_ACTIVE: 'SESSION_ACTIVE',
   INVALID_LICENSE_PLATE: 'INVALID_LICENSE_PLATE',
+  QUOTA_FULL: 'QUOTA_FULL', // booking window locked (capacity-reservation)
+  FULL: 'FULL', // walk-in admission denied — no headroom
 
   // Server
   INTERNAL_ERROR: 'INTERNAL_ERROR',
@@ -114,6 +126,8 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   BOOKING_EXPIRED: 'Đặt chỗ đã hết hạn',
   SESSION_ACTIVE: 'Phiên đỗ xe đang hoạt động',
   INVALID_LICENSE_PLATE: 'Biển số xe không hợp lệ',
+  QUOTA_FULL: 'Khung giờ đã khóa đặt chỗ',
+  FULL: 'Bãi đã đầy cho loại xe này',
 
   // Server
   INTERNAL_ERROR: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau',
@@ -158,6 +172,20 @@ export function normalizeSpringBootError(error: unknown): AppError {
       status: 0,
       code: ErrorCodes.NETWORK_ERROR,
       message: ERROR_MESSAGES.NETWORK_ERROR,
+      timestamp: new Date().toISOString(),
+    }
+  }
+
+  // Handle the authoritative API envelope { success:false, message, errorCode }
+  if (isApiEnvelopeError(error)) {
+    const code = (error.errorCode in ERROR_MESSAGES
+      ? error.errorCode
+      : ErrorCodes.UNKNOWN_ERROR) as ErrorCode
+    return {
+      status: 0,
+      code,
+      // Prefer the server's message; fall back to our localized copy.
+      message: error.message || ERROR_MESSAGES[code],
       timestamp: new Date().toISOString(),
     }
   }
@@ -222,6 +250,20 @@ export function normalizeSpringBootError(error: unknown): AppError {
     message: ERROR_MESSAGES.UNKNOWN_ERROR,
     timestamp: new Date().toISOString(),
   }
+}
+
+/**
+ * Type guard for the authoritative API error envelope
+ */
+function isApiEnvelopeError(error: unknown): error is ApiEnvelopeError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'success' in error &&
+    (error as { success: unknown }).success === false &&
+    'errorCode' in error &&
+    'message' in error
+  )
 }
 
 /**
