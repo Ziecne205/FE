@@ -47,11 +47,9 @@ export interface ResolveIncidentInput {
 export function useResolveIncident() {
   const queryClient = useQueryClient()
   return useMutation({
-    // BE: PATCH /staff/incidents/{id}/resolve?resolutionNotes= (query param, not request body).
-    // The controller uses @RequestParam String resolutionNotes — DO NOT send a body.
+    // BE: PATCH /staff/incidents/{id}/resolve with JSON body
     mutationFn: ({ incidentId, resolutionNotes }: ResolveIncidentInput) => {
-      const qs = resolutionNotes ? `?resolutionNotes=${encodeURIComponent(resolutionNotes)}` : ''
-      return api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve${qs}`)
+      return api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve`, { resolutionNotes })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] })

@@ -26,53 +26,7 @@ export function SlotMap() {
 
   return (
     <div className="space-y-6">
-      {/* Capacity-crash warning dialog */}
-      {map.pendingLock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <span className="material-symbols-outlined text-amber-500 text-2xl mt-0.5">warning</span>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-base">Xác nhận bảo trì</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Bạn đang đặt <strong>{map.pendingLock.length}</strong> ô sang trạng thái{' '}
-                  <span className="font-semibold text-amber-700">Bảo trì</span>:{' '}
-                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">
-                    {map.pendingLock.join(', ')}
-                  </span>
-                </p>
-                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
-                  ⚠️ Nếu sức chứa còn lại sau bảo trì thấp hơn số đặt chỗ đang chờ, hệ thống sẽ{' '}
-                  <strong>tự động huỷ các đặt chỗ mới nhất</strong> và hoàn cọc cho tài xế. Hành động này không thể hoàn tác.
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-2">
-              <button
-                onClick={map.clearPendingLock}
-                disabled={map.isLocking}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              >
-                Huỷ
-              </button>
-              <button
-                onClick={map.confirmLock}
-                disabled={map.isLocking}
-                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-semibold flex items-center gap-2 transition-colors"
-              >
-                {map.isLocking ? (
-                  <>
-                    <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                    Đang xử lý...
-                  </>
-                ) : (
-                  'Xác nhận bảo trì'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <SlotMapHeader
         floors={map.floors}
@@ -121,7 +75,7 @@ export function SlotMap() {
               onDeselect={map.toggleSelect}
               onReasonChange={map.setReason}
               onNotesChange={map.setNotes}
-              onLock={map.requestLock}
+              onLock={map.confirmLock}
               onClear={map.clearSelection}
             />
           ) : map.detailSlot ? (
