@@ -111,7 +111,6 @@ export interface BePricingPolicy {
 }
 
 export interface BeFeeConfig {
-  hourlyRate: number
   depositPercent: number
   overstayRatePerHour: number
   noShowGraceMinutes: number

@@ -4,4 +4,3 @@ export { KpiCard } from './KpiCard';
 export { VehicleTypeCard } from './VehicleTypeCard';
 export { WarningBanner } from './WarningBanner';
 export * from './types';
-export * from './mockData';

@@ -86,7 +86,7 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
             <div>
               <p className="font-medium text-gray-900">Nhập thủ công khi AI Camera lỗi</p>
               <p className="text-sm text-gray-600 mt-1">
-                Sử dụng nút "Nhập thủ công" để tạo phiên gửi xe mới khi hệ thống AI không đọc được biển số
+                Sử dụng nút &quot;Nhập thủ công&quot; để tạo phiên gửi xe mới khi hệ thống AI không đọc được biển số
               </p>
             </div>
           </div>

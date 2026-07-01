@@ -18,7 +18,23 @@ export function Reports() {
   const { revenue, occupancy, isLoading } = useReports(range)
 
   function handleExport() {
-    // stub — Opus will wire real export
+    if (revenue.length === 0) return
+
+    const header = ['Ngày', 'Doanh thu (VND)', 'Số phiên', 'Tỷ lệ lấp đầy (%)']
+    const rows = revenue.map((r) => [r.date, r.revenue, r.sessions, r.occupancyRate])
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bao-cao-${range.from}_${range.to}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (

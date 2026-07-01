@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import { formatDateTime, formatDuration, formatCurrency } from '@/lib/utils'
+import { useNow } from '@/hooks/useNow'
 import type { ParkingSession } from '@/types/model'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -26,6 +27,8 @@ interface Props {
 }
 
 export function SessionTable({ sessions }: Props) {
+  const now = useNow()
+
   if (sessions.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white py-16 text-center text-sm text-gray-500 shadow-sm">
@@ -100,11 +103,13 @@ export function SessionTable({ sessions }: Props) {
                 {s.actualSlotCode ?? '—'}
               </TableCell>
               <TableCell className="text-sm text-gray-600">
-                {s.parkedTime
-                  ? formatDuration(Math.floor((new Date(s.exitTime ?? Date.now()).getTime() - new Date(s.parkedTime).getTime()) / 60000))
-                  : s.status === 'Admitted'
-                    ? formatDuration(Math.floor((Date.now() - new Date(s.entryTime).getTime()) / 60000))
-                    : '—'}
+                {now === null
+                  ? '—'
+                  : s.parkedTime
+                    ? formatDuration(Math.floor((new Date(s.exitTime ?? now).getTime() - new Date(s.parkedTime).getTime()) / 60000))
+                    : s.status === 'Admitted'
+                      ? formatDuration(Math.floor((now - new Date(s.entryTime).getTime()) / 60000))
+                      : '—'}
               </TableCell>
               <TableCell className="text-sm text-gray-600">
                 {s.totalFee != null
