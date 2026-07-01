@@ -5,6 +5,8 @@ import { SystemUsageCurve } from './SystemUsageCurve';
 import { IncidentList } from './IncidentList';
 import { mockUsageCurve } from './mockData';
 
+
+
 export function SystemOverview() {
   const { data, isLoading } = useAdminDashboard();
 
@@ -29,7 +31,7 @@ export function SystemOverview() {
         </div>
       </div>
 
-      <SystemUsageCurve data={mockUsageCurve} />
+      <SystemUsageCurve data={data.usageCurve?.length ? data.usageCurve : mockUsageCurve} />
     </div>
   );
 }

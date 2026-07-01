@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useQuotas, useUpsertQuota, useToggleQuota } from '@/hooks/useQuotas'
+import { useVehicleTypes, useAvailability } from '@/hooks/useAvailability'
 import type { BookingQuota } from '@/types/model'
 import { buildGroups } from './mockData'
 import { QuotaTable } from './QuotaTable'
@@ -10,13 +11,30 @@ import { QuotaFormDialog } from './QuotaFormDialog'
 
 export function QuotaManagement() {
   const { data: quotas = [], isLoading } = useQuotas()
+  const { data: vehicleTypes = [] } = useVehicleTypes()
+  const { data: availability } = useAvailability()
   const upsertQuota = useUpsertQuota()
   const toggleQuota = useToggleQuota()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<BookingQuota | null>(null)
 
-  const groups = useMemo(() => buildGroups(quotas), [quotas])
+  // Map id→tên và id→sức chứa (availability trả theo TÊN loại xe nên ghép qua tên).
+  const nameById = useMemo(
+    () => Object.fromEntries(vehicleTypes.map((v) => [v.id, v.name])),
+    [vehicleTypes],
+  )
+  const capacityById = useMemo(() => {
+    const capByName = Object.fromEntries(
+      (availability?.byVehicleType ?? []).map((a) => [a.vehicleTypeName, a.capacity]),
+    )
+    return Object.fromEntries(vehicleTypes.map((v) => [v.id, capByName[v.name] ?? 0]))
+  }, [vehicleTypes, availability])
+
+  const groups = useMemo(
+    () => buildGroups(quotas, nameById, capacityById),
+    [quotas, nameById, capacityById],
+  )
 
   function openCreate() {
     setEditTarget(null)
@@ -85,6 +103,8 @@ export function QuotaManagement() {
       <QuotaFormDialog
         open={dialogOpen}
         initialValues={editTarget}
+        vehicleTypes={vehicleTypes}
+        capacityById={capacityById}
         onClose={handleClose}
         onSubmit={handleSubmit}
         isSubmitting={upsertQuota.isPending}

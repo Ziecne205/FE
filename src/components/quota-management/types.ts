@@ -1,4 +1,4 @@
-import type { BookingQuota } from '@/types/model'
+import type { BookingQuota, VehicleType } from '@/types/model'
 
 export interface QuotaRow extends BookingQuota {
   /** derived: ceil(quotaPercent / 100 * C) */
@@ -23,6 +23,8 @@ export interface QuotaTableProps {
 export interface QuotaFormDialogProps {
   readonly open: boolean
   readonly initialValues?: BookingQuota | null
+  readonly vehicleTypes: VehicleType[]
+  readonly capacityById: Record<string, number>
   readonly onClose: () => void
   readonly onSubmit: (values: {
     quotaId?: string

@@ -24,6 +24,10 @@ const routeTitles: Record<string, string> = {
   '/reports': 'Báo cáo',
   '/exit-payment': 'Thanh toán cổng ra',
   '/simulator': 'Mô phỏng Cổng & Camera',
+  '/admin/users': 'Quản lý tài khoản',
+  '/admin/rbac': 'Phân quyền',
+  '/admin/system-config': 'Cấu hình hệ thống',
+  '/admin/audit-logs': 'Nhật ký hệ thống',
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {

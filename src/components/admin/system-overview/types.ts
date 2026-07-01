@@ -22,6 +22,7 @@ export interface AdminDashboard {
     openIncidents: number;
     revenueToday: number;
   };
+  usageCurve?: UsagePoint[];
 }
 
 export interface UsagePoint {

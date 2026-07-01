@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api, type AppError } from '@/lib/api'
-import type { LotAvailability, Slot, VehicleType } from '@/types/model'
+import type { LotAvailability, Slot } from '@/types/model'
+import { mapSlot, mapVehicleType, type BeSlot, type BeVehicleType } from '@/lib/beApi'
 
 export interface MaintenanceResult {
   success: boolean
@@ -16,15 +17,18 @@ export interface MaintenanceResult {
 export function useVehicleTypes() {
   return useQuery({
     queryKey: ['vehicle-types'],
-    queryFn: () => api.get<VehicleType[]>('/vehicle-types'),
+    queryFn: async () => {
+      const list = await api.get<BeVehicleType[]>('/manager/vehicle-types')
+      return list.map(mapVehicleType)
+    },
   })
 }
 
-/** Realtime headroom view for the building — the source of truth for occupancy. */
+/** Realtime headroom view for the building — BE trả đúng shape LotAvailability. */
 export function useAvailability() {
   return useQuery({
     queryKey: ['availability'],
-    queryFn: () => api.get<LotAvailability>('/availability'),
+    queryFn: () => api.get<LotAvailability>('/manager/availability'),
   })
 }
 
@@ -32,16 +36,34 @@ export function useAvailability() {
 export function useLotSlots() {
   return useQuery({
     queryKey: ['slots'],
-    queryFn: () => api.get<Slot[]>('/slots-map'),
+    queryFn: async () => {
+      const list = await api.get<BeSlot[]>('/manager/slots')
+      return list.map(mapSlot)
+    },
   })
 }
 
-/** Mark slots Maintenance/Available, surfacing the capacity-crash warning. */
+/**
+ * Mark slots Maintenance/Available. BE chỉ có PATCH theo từng slotId
+ * (`/manager/slots/{id}/maintenance?maintenance=`), nên ta:
+ * 1. tra slotCode → slotId từ cache ['slots'],
+ * 2. gọi PATCH lần lượt cho từng ô đã chọn.
+ */
 export function useSetMaintenance() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (vars: { slotCodes: string[]; maintenance: boolean }) =>
-      api.post<MaintenanceResult>('/admin/slots/maintenance', vars),
+  return useMutation<MaintenanceResult, AppError, { slotCodes: string[]; maintenance: boolean }>({
+    mutationFn: async ({ slotCodes, maintenance }) => {
+      const cached = queryClient.getQueryData<Slot[]>(['slots']) ?? []
+      const byCode = new Map(cached.map((s) => [s.slotCode, s.id]))
+      const ids = slotCodes.map((code) => byCode.get(code)).filter((id): id is string => !!id)
+
+      await Promise.all(
+        ids.map((id) =>
+          api.patch<unknown>(`/manager/slots/${id}/maintenance?maintenance=${maintenance}`),
+        ),
+      )
+      return { success: true, availability: { byVehicleType: [] }, warning: null }
+    },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['slots'] })
       queryClient.invalidateQueries({ queryKey: ['availability'] })

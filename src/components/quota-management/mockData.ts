@@ -1,19 +1,16 @@
 import type { VehicleTypeGroup } from './types'
 import type { BookingQuota } from '@/types/model'
 
-// Mock capacity per vehicle type (Opus wires to real availability API)
-// vehicleTypeId must match VEHICLE_TYPES in src/mocks/data/lots.ts
-export const MOCK_CAPACITY: Record<string, number> = {
-  'vt-car': 26,
-  'vt-moto': 30,
-}
-
-export const MOCK_VEHICLE_TYPE_NAMES: Record<string, string> = {
-  'vt-car': 'Ô tô',
-  'vt-moto': 'Xe máy',
-}
-
-export function buildGroups(quotas: BookingQuota[]): VehicleTypeGroup[] {
+/**
+ * Gom quota theo loại xe, lấy TÊN và SỨC CHỨA thật (truyền từ vehicle-types +
+ * availability API). Trước đây hardcode 'vt-car'/'vt-moto' nên với dữ liệu BE
+ * (vehicleTypeId dạng số) thì tên & capacity đều sai.
+ */
+export function buildGroups(
+  quotas: BookingQuota[],
+  nameById: Record<string, string>,
+  capacityById: Record<string, number>,
+): VehicleTypeGroup[] {
   const byType: Record<string, BookingQuota[]> = {}
   for (const q of quotas) {
     if (!byType[q.vehicleTypeId]) byType[q.vehicleTypeId] = []
@@ -21,8 +18,8 @@ export function buildGroups(quotas: BookingQuota[]): VehicleTypeGroup[] {
   }
 
   return Object.entries(byType).map(([vehicleTypeId, rows]) => {
-    const capacity = MOCK_CAPACITY[vehicleTypeId] ?? 50
-    const name = MOCK_VEHICLE_TYPE_NAMES[vehicleTypeId] ?? vehicleTypeId
+    const capacity = capacityById[vehicleTypeId] ?? 0
+    const name = nameById[vehicleTypeId] ?? vehicleTypeId
     return {
       vehicleTypeId,
       vehicleTypeName: name,

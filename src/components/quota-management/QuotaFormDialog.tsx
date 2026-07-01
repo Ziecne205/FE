@@ -17,17 +17,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { MOCK_CAPACITY, MOCK_VEHICLE_TYPE_NAMES } from './mockData'
 import type { QuotaFormDialogProps } from './types'
 
 export function QuotaFormDialog({
   open,
   initialValues,
+  vehicleTypes,
+  capacityById,
   onClose,
   onSubmit,
   isSubmitting,
 }: QuotaFormDialogProps) {
-  const [vehicleTypeId, setVehicleTypeId] = useState('vt-car')
+  const [vehicleTypeId, setVehicleTypeId] = useState('')
   const [windowStart, setWindowStart] = useState('08:00')
   const [windowEnd, setWindowEnd] = useState('10:00')
   const [quotaPercent, setQuotaPercent] = useState(30)
@@ -35,15 +36,17 @@ export function QuotaFormDialog({
   // Reset form when dialog opens or initialValues change
   useEffect(() => {
     if (open) {
-      setVehicleTypeId(initialValues?.vehicleTypeId ?? 'vt-car')
+      setVehicleTypeId(initialValues?.vehicleTypeId ?? vehicleTypes[0]?.id ?? '')
       setWindowStart(initialValues?.windowStart ?? '08:00')
       setWindowEnd(initialValues?.windowEnd ?? '10:00')
       setQuotaPercent(initialValues?.quotaPercent ?? 30)
     }
-  }, [open, initialValues])
+  }, [open, initialValues, vehicleTypes])
 
-  const capacity = MOCK_CAPACITY[vehicleTypeId] ?? 50
+  const capacity = capacityById[vehicleTypeId] ?? 0
   const quotaAbs = Math.ceil((quotaPercent / 100) * capacity)
+  const vehicleTypeName =
+    vehicleTypes.find((v) => v.id === vehicleTypeId)?.name ?? vehicleTypeId
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -76,9 +79,9 @@ export function QuotaFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(MOCK_VEHICLE_TYPE_NAMES).map(([id, name]) => (
-                  <SelectItem key={id} value={id}>
-                    {name}
+                {vehicleTypes.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -136,7 +139,7 @@ export function QuotaFormDialog({
             <span className="font-semibold">{quotaAbs} suất</span>
             {' '}trên tổng{' '}
             <span className="font-semibold">{capacity} suất</span>{' '}
-            ({MOCK_VEHICLE_TYPE_NAMES[vehicleTypeId] ?? vehicleTypeId})
+            ({vehicleTypeName})
           </div>
 
           <DialogFooter className="gap-2 pt-2">

@@ -36,13 +36,16 @@ export const SESSION_STATUS_LABELS: Record<string, string> = {
   Abandoned: 'Bỏ dở',
 };
 
+// Khớp với IssueType enum của BE (IncidentReport.issueType).
 export const INCIDENT_TYPE_LABELS: Record<string, string> = {
-  UNMAPPED_OCCUPANCY: 'Xe lậu (không khớp phiên)',
-  ABANDONED_SESSION: 'Phiên bỏ dở',
-  EXIT_UNCLOSED: 'Cổng ra chưa đóng',
-  OVERSTAY: 'Quá giờ',
-  MANUAL_OVERRIDE: 'Cho vào thủ công (audit)',
-  OTHER: 'Khác',
+  LostCard: 'Mất thẻ',
+  Loiterer: 'Người lảng vảng',
+  ExitTailgating: 'Bám đuôi cổng ra',
+  PlateMismatch: 'Sai biển số',
+  CapacityCrash: 'Vượt sức chứa',
+  Overstay: 'Quá giờ',
+  CameraMiss: 'Camera đọc lỗi',
+  Other: 'Khác',
 };
 
 export const INCIDENT_STATUS_LABELS: Record<string, string> = {

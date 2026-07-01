@@ -17,6 +17,10 @@ import {
   CreditCard,
   Cctv,
   DollarSign,
+  Users,
+  Shield,
+  Settings,
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,10 +53,23 @@ const staffNavItems = [
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 
+// Phân hệ Quản trị viên — chỉ Admin thấy (gắn thêm vào sau nav của Manager).
+const adminNavItems = [
+  { href: '/admin/users', icon: Users, label: 'Tài khoản' },
+  { href: '/admin/rbac', icon: Shield, label: 'Phân quyền' },
+  { href: '/admin/system-config', icon: Settings, label: 'Cấu hình hệ thống' },
+  { href: '/admin/audit-logs', icon: ScrollText, label: 'Nhật ký' },
+];
+
 export function Sidebar({ userRole, onNewEntry, onLogout }: SidebarProps) {
   const pathname = usePathname();
-  // Staff get the operational nav; Manager and Admin (superset) get the full manager nav.
-  const navItems = userRole === 'Staff' ? staffNavItems : managerNavItems;
+  // Staff: nav vận hành. Manager: nav quản lý. Admin (superset): nav quản lý + phân hệ quản trị.
+  const navItems =
+    userRole === 'Staff'
+      ? staffNavItems
+      : userRole === 'Admin'
+        ? [...managerNavItems, ...adminNavItems]
+        : managerNavItems;
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 h-full flex-col p-4 z-40 w-[280px] bg-gray-50 border-r border-gray-200">

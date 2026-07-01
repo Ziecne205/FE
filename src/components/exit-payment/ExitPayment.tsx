@@ -44,6 +44,7 @@ function computeBreakdown(entryTime: string): FeeBreakdownLine[] {
 export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: ExitPaymentProps) {
   const [method, setMethod] = useState<PaymentMethod>('QR')
   const [success, setSuccess] = useState(false)
+  const [paidAmount, setPaidAmount] = useState(totalFee)
 
   const { mutate, isPending } = usePayParking()
 
@@ -51,9 +52,15 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
   const breakdown = computeBreakdown(entryTime)
 
   function handleConfirm() {
+    // Check-out thật theo biển số; BE trả về số tiền đã tính để hiển thị biên nhận.
     mutate(
-      { sessionId, paymentMethod: method, amount: totalFee },
-      { onSuccess: () => setSuccess(true) },
+      { licensePlate, paymentMethod: method },
+      {
+        onSuccess: (res) => {
+          setPaidAmount(res.amount || totalFee)
+          setSuccess(true)
+        },
+      },
     )
   }
 
@@ -67,7 +74,7 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
           <p className="text-2xl font-bold text-gray-900">Đã thanh toán</p>
           <p className="mt-1 font-mono text-lg font-semibold text-gray-600">{licensePlate}</p>
           <p className="mt-1 text-sm text-gray-500">
-            {formatCurrency(totalFee)} · Mời xe qua khỏi barie
+            {formatCurrency(paidAmount)} · Mời xe qua khỏi barie
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700">

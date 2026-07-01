@@ -26,13 +26,12 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function enableMocking() {
-      if (process.env.NODE_ENV === 'development') {
+      // 1 công tắc: CHƯA set NEXT_PUBLIC_API_BASE = bật mock MSW; đã set = gọi server thật.
+      if (!process.env.NEXT_PUBLIC_API_BASE) {
         const { initMocks } = await import('@/mocks')
         await initMocks()
-        setMockingEnabled(true)
-      } else {
-        setMockingEnabled(true)
       }
+      setMockingEnabled(true)
     }
 
     enableMocking()

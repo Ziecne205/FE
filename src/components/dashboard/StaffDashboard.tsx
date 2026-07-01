@@ -124,26 +124,26 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Trống</span>
             <span className="text-sm font-bold text-green-600">
-              {stats.available} / {stats.total_slots} ({Math.round((stats.available / stats.total_slots) * 100)}%)
+              {stats.available} / {stats.total_slots} ({Math.round((stats.available / (stats.total_slots || 1)) * 100)}%)
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-green-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.available / stats.total_slots) * 100}%` }}
+              style={{ width: `${(stats.available / (stats.total_slots || 1)) * 100}%` }}
             />
           </div>
 
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-gray-600">Đã đỗ</span>
             <span className="text-sm font-bold text-red-600">
-              {stats.occupied} / {stats.total_slots} ({Math.round((stats.occupied / stats.total_slots) * 100)}%)
+              {stats.occupied} / {stats.total_slots} ({Math.round((stats.occupied / (stats.total_slots || 1)) * 100)}%)
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-red-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(stats.occupied / stats.total_slots) * 100}%` }}
+              style={{ width: `${(stats.occupied / (stats.total_slots || 1)) * 100}%` }}
             />
           </div>
 

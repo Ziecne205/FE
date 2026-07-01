@@ -22,6 +22,10 @@ export type PaymentType = 'Deposit' | 'Parking' | 'Penalty';
 export type PaymentMethod = 'Cash' | 'QR';
 export type IncidentStatus = 'Open' | 'InProgress' | 'Resolved';
 export type IncidentType =
+  // BE IssueType enum (giá trị thật từ server)
+  | 'LostCard' | 'Loiterer' | 'ExitTailgating' | 'PlateMismatch'
+  | 'CapacityCrash' | 'Overstay' | 'CameraMiss' | 'Other'
+  // Giá trị mock cũ — giữ để dữ liệu MSW còn type-check (dev only)
   | 'UNMAPPED_OCCUPANCY' | 'ABANDONED_SESSION' | 'EXIT_UNCLOSED'
   | 'OVERSTAY' | 'MANUAL_OVERRIDE' | 'OTHER';
 export type GateType = 'Entry' | 'Exit';

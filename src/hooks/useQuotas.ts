@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api, type AppError } from '@/lib/api'
 import type { BookingQuota } from '@/types/model'
+import { mapQuota, type BeQuota } from '@/lib/beApi'
 
 export interface UpsertQuotaInput {
   quotaId?: string
@@ -11,21 +12,35 @@ export interface UpsertQuotaInput {
   quotaPercent: number
 }
 
+/** "08:00" → "08:00:00" (BE dùng LocalTime). */
+function toLocalTime(hhmm: string): string {
+  return hhmm.length === 5 ? `${hhmm}:00` : hhmm
+}
+
 export function useQuotas() {
   return useQuery({
     queryKey: ['quotas'],
-    queryFn: () => api.get<BookingQuota[]>('/admin/quotas'),
+    queryFn: async () => {
+      const list = await api.get<BeQuota[]>('/manager/booking-quotas')
+      return list.map(mapQuota)
+    },
   })
 }
 
 export function useUpsertQuota() {
   const queryClient = useQueryClient()
   return useMutation<BookingQuota, AppError, UpsertQuotaInput>({
-    mutationFn: (input) => {
-      if (input.quotaId) {
-        return api.put<BookingQuota>(`/admin/quotas/${input.quotaId}`, input)
+    mutationFn: async (input) => {
+      const body = {
+        vehicleTypeId: Number(input.vehicleTypeId),
+        startTime: toLocalTime(input.windowStart),
+        endTime: toLocalTime(input.windowEnd),
+        quotaPercent: input.quotaPercent,
       }
-      return api.post<BookingQuota>('/admin/quotas', input)
+      const saved = input.quotaId
+        ? await api.put<BeQuota>(`/manager/booking-quotas/${input.quotaId}`, body)
+        : await api.post<BeQuota>('/manager/booking-quotas', body)
+      return mapQuota(saved)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotas'] })
@@ -35,20 +50,13 @@ export function useUpsertQuota() {
   })
 }
 
+/** Bật/tắt hiệu lực quota — PATCH /manager/booking-quotas/{id}/toggle. */
 export function useToggleQuota() {
   const queryClient = useQueryClient()
   return useMutation<BookingQuota, AppError, string>({
     mutationFn: async (quotaId: string) => {
-      // Find the quota in any cached quota list, then PUT with toggled isActive
-      const allCached = queryClient
-        .getQueriesData<BookingQuota[]>({ queryKey: ['quotas'] })
-        .flatMap(([, data]) => data ?? [])
-      const current = allCached.find((q) => q.quotaId === quotaId)
-      if (!current) throw new Error('Quota not found in cache')
-      return api.put<BookingQuota>(`/admin/quotas/${quotaId}`, {
-        ...current,
-        isActive: !current.isActive,
-      })
+      const saved = await api.patch<BeQuota>(`/manager/booking-quotas/${quotaId}/toggle`)
+      return mapQuota(saved)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotas'] })
