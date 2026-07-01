@@ -88,7 +88,7 @@ export function QuotaManagement() {
         <div className="py-12 text-center text-sm text-gray-400">Đang tải...</div>
       ) : groups.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center text-sm text-gray-400">
-          Chưa có hạn mức nào. Nhấn "Thêm hạn mức" để bắt đầu.
+          Chưa có hạn mức nào. Nhấn &quot;Thêm hạn mức&quot; để bắt đầu.
         </div>
       ) : (
         <QuotaTable

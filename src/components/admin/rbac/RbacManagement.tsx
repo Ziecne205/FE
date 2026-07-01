@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
@@ -17,12 +17,10 @@ export function RbacManagement() {
   const togglePermission = useTogglePermission()
 
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null)
-  useEffect(() => {
-    if (selectedRoleId == null && roles.length > 0) setSelectedRoleId(roles[0].roleId)
-  }, [roles, selectedRoleId])
+  const effectiveRoleId = selectedRoleId ?? roles[0]?.roleId ?? null
 
   const { data: rolePerms = [], isLoading: rolePermsLoading } =
-    useRolePermissions(selectedRoleId)
+    useRolePermissions(effectiveRoleId)
 
   const grantedIds = useMemo(
     () => new Set(rolePerms.map((p) => p.permissionId)),
@@ -53,13 +51,13 @@ export function RbacManagement() {
                       onClick={() => setSelectedRoleId(r.roleId)}
                       className={cn(
                         'flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors',
-                        selectedRoleId === r.roleId
+                        effectiveRoleId === r.roleId
                           ? 'bg-blue-50 font-medium text-blue-700'
                           : 'hover:bg-gray-50',
                       )}
                     >
                       <span>{r.roleName}</span>
-                      {selectedRoleId === r.roleId && <ShieldCheck className="h-4 w-4" />}
+                      {effectiveRoleId === r.roleId && <ShieldCheck className="h-4 w-4" />}
                     </button>
                   </li>
                 ))}
@@ -72,7 +70,7 @@ export function RbacManagement() {
         <div className="lg:col-span-8">
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-700">
-              Quyền hạn {selectedRoleId != null && `· ${roles.find((r) => r.roleId === selectedRoleId)?.roleName ?? ''}`}
+              Quyền hạn {effectiveRoleId != null && `· ${roles.find((r) => r.roleId === effectiveRoleId)?.roleName ?? ''}`}
             </div>
             {permsLoading || rolePermsLoading ? (
               <div className="px-4 py-6 text-center text-sm text-gray-400">Đang tải...</div>
@@ -95,11 +93,11 @@ export function RbacManagement() {
                       </div>
                       <Switch
                         checked={granted}
-                        disabled={selectedRoleId == null || togglePermission.isPending}
+                        disabled={effectiveRoleId == null || togglePermission.isPending}
                         onCheckedChange={(checked) =>
-                          selectedRoleId != null &&
+                          effectiveRoleId != null &&
                           togglePermission.mutate({
-                            roleId: selectedRoleId,
+                            roleId: effectiveRoleId,
                             permissionId: p.permissionId,
                             enabled: checked,
                           })

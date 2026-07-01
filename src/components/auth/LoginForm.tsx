@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -36,7 +36,7 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
+    control,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -46,7 +46,8 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
     },
   });
 
-  const remember = watch('remember');
+  // useWatch (thay vì watch()) — API dạng hook, tương thích React Compiler.
+  const remember = useWatch({ control, name: 'remember' });
 
   const onFormSubmit = (data: LoginFormData) => {
     onSubmit(data.email, data.password, data.remember || false);

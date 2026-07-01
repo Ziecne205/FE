@@ -63,11 +63,10 @@ export function useUpdateFeeConfig() {
   const queryClient = useQueryClient()
   return useMutation<FeeConfig, AppError, Partial<FeeConfig>>({
     mutationFn: async (input) => {
-      // BE PUT /fee-config gọi .toString() trên TẤT CẢ field → phải gửi đủ 5 field
-      // (gồm hourlyRate mà FE không quản). Lấy config hiện tại rồi ghi đè phần thay đổi.
+      // BE PUT /fee-config gọi .toString() trên TẤT CẢ field → phải gửi đủ field.
+      // Lấy config hiện tại rồi ghi đè phần thay đổi.
       const current = await api.get<BeFeeConfig>('/manager/fee-config')
       const body: BeFeeConfig = {
-        hourlyRate: current.hourlyRate,
         depositPercent: input.depositPercent ?? current.depositPercent,
         overstayRatePerHour: input.overstayRatePerHour ?? current.overstayRatePerHour,
         noShowGraceMinutes: input.noShowGraceMinutes ?? current.noShowGraceMinutes,
