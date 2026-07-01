@@ -58,13 +58,36 @@ export const useAuthStore = create<AuthState>()(
         try {
           const res = await api.post<LoginResponse>('/auth/login', { username, password })
           setToken(res.token)
-          const loggedUser: User = {
+          const role = mapRole(res.roleName)
+          let loggedUser: User = {
             id: res.username,
             email: '',
-            fullName: res.username, // BE login không trả fullName (Phase 4: GET /driver/profile)
-            role: mapRole(res.roleName),
+            fullName: res.username,
+            role,
             status: 'Active',
           }
+
+          if (role === 'Driver') {
+            // BE login không trả fullName/email/phone — GET /driver/profile để bổ sung.
+            try {
+              const profile = await api.get<{
+                fullName: string
+                email: string
+                phoneNumber: string
+                status: string
+              }>('/driver/profile')
+              loggedUser = {
+                ...loggedUser,
+                fullName: profile.fullName || loggedUser.fullName,
+                email: profile.email || '',
+                phone: profile.phoneNumber || undefined,
+                status: (profile.status as User['status']) ?? 'Active',
+              }
+            } catch {
+              // Hồ sơ không tải được thì vẫn cho đăng nhập với dữ liệu tối thiểu từ /auth/login.
+            }
+          }
+
           set({ user: loggedUser, isAuthenticated: true, isLoading: false })
           toast.success('Đăng nhập thành công')
         } catch (error) {
