@@ -11,14 +11,13 @@ import { Label } from '@/components/ui/label'
 import { useForgotPassword } from '@/hooks/usePasswordReset'
 
 const schema = z.object({
-  username: z.string().min(1, 'Vui lòng nhập tên đăng nhập'),
+  identifier: z.string().min(1, 'Vui lòng nhập email, tên đăng nhập hoặc SĐT'),
 })
 type FormData = z.infer<typeof schema>
 
 export function ForgotPasswordForm() {
   const forgot = useForgotPassword()
-  const [submitted, setSubmitted] = useState(false)
-  const [devToken, setDevToken] = useState<string | undefined>()
+  const [maskedEmail, setMaskedEmail] = useState<string | null>(null)
 
   const {
     register,
@@ -26,40 +25,30 @@ export function ForgotPasswordForm() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { username: '' },
+    defaultValues: { identifier: '' },
   })
 
   const onSubmit = (data: FormData) => {
     forgot.mutate(
-      { username: data.username },
-      {
-        onSuccess: (res) => {
-          setSubmitted(true)
-          setDevToken(res?.devResetToken)
-        },
-      },
+      { identifier: data.identifier },
+      { onSuccess: (masked) => setMaskedEmail(masked) },
     )
   }
 
-  // Generic confirmation — shown regardless of whether the account exists.
-  if (submitted) {
+  // OTP sent — tell the user exactly where, and route them to enter it.
+  if (maskedEmail) {
     return (
       <div className="space-y-4">
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-          Nếu tài khoản tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu tới thông tin liên hệ
-          đã đăng ký.
+          Mã OTP (6 số) đã được gửi tới email{' '}
+          <span className="font-semibold">{maskedEmail}</span>. Mã có hiệu lực trong 10 phút.
         </div>
-        {devToken && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            <p className="mb-1 font-semibold">DEV/MOCK — liên kết thử nghiệm:</p>
-            <Link
-              href={`/reset-password?token=${encodeURIComponent(devToken)}`}
-              className="font-mono break-all text-blue-600 hover:underline"
-            >
-              /reset-password?token={devToken}
-            </Link>
-          </div>
-        )}
+        <Link
+          href="/reset-password"
+          className="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Nhập mã OTP để đặt lại mật khẩu
+        </Link>
         <Link href="/login" className="block text-center text-sm text-blue-600 hover:underline">
           Quay lại đăng nhập
         </Link>
@@ -70,21 +59,26 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <Label htmlFor="fp-username" className="block text-sm font-medium text-gray-900 mb-2">
-          Tên đăng nhập
+        <Label htmlFor="fp-identifier" className="block text-sm font-medium text-gray-900 mb-2">
+          Email / Tên đăng nhập / SĐT
         </Label>
         <Input
-          id="fp-username"
+          id="fp-identifier"
           type="text"
           placeholder="vd: manager@parking.vn"
           disabled={forgot.isPending}
-          {...register('username')}
+          {...register('identifier')}
         />
-        {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>}
+        {errors.identifier && (
+          <p className="mt-1 text-sm text-red-600">{errors.identifier.message}</p>
+        )}
+        <p className="mt-1 text-xs text-gray-500">
+          Mã OTP sẽ được gửi tới email đã đăng ký của tài khoản.
+        </p>
       </div>
 
       <Button type="submit" className="w-full" disabled={forgot.isPending}>
-        {forgot.isPending ? 'Đang gửi...' : 'Gửi hướng dẫn đặt lại'}
+        {forgot.isPending ? 'Đang gửi...' : 'Gửi mã OTP'}
       </Button>
 
       <Link href="/login" className="block text-center text-sm text-blue-600 hover:underline">

@@ -21,6 +21,7 @@ import {
   Shield,
   Settings,
   ScrollText,
+  MonitorDot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ const staffNavItems = [
 
 // Phân hệ Quản trị viên — chỉ Admin thấy (gắn thêm vào sau nav của Manager).
 const adminNavItems = [
+  { href: '/admin/overview', icon: MonitorDot, label: 'Trung tâm Giám sát' },
   { href: '/admin/users', icon: Users, label: 'Tài khoản' },
   { href: '/admin/rbac', icon: Shield, label: 'Phân quyền' },
   { href: '/admin/system-config', icon: Settings, label: 'Cấu hình hệ thống' },

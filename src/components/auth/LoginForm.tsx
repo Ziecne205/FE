@@ -12,10 +12,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 const loginSchema = z.object({
-  // BE đăng nhập bằng username → chấp nhận cả email lẫn tên đăng nhập (không ép định dạng email).
+  // BE đăng nhập bằng username / email / SĐT → không ép định dạng email.
   email: z
     .string()
-    .min(1, 'Vui lòng nhập email hoặc tên đăng nhập'),
+    .min(1, 'Vui lòng nhập email, tên đăng nhập hoặc SĐT'),
   password: z
     .string()
     .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
@@ -59,7 +59,7 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
       {/* Email Field */}
       <div>
         <Label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
-          Email hoặc Tên đăng nhập
+          Email / Tên đăng nhập / SĐT
         </Label>
         <Input
           id="email"

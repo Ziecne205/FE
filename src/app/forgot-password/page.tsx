@@ -12,8 +12,8 @@ export default function ForgotPasswordPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-2">Quên mật khẩu?</h2>
         <p className="text-sm text-gray-600">
-          Nhập tên đăng nhập, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu tới thông tin liên hệ
-          đã đăng ký.
+          Nhập email, tên đăng nhập hoặc số điện thoại. Chúng tôi sẽ gửi mã OTP tới email đã
+          đăng ký của tài khoản.
         </p>
       </div>
       <ForgotPasswordForm />

@@ -6,7 +6,7 @@ import type { UserRole } from '@/types/model'
  * - `canAccess`: per-route-prefix guard. Admin is a superset (allowed everywhere).
  */
 export const roleHome: Record<UserRole, string> = {
-  Admin: '/dashboard', // TODO: '/admin/overview' once the admin tranche lands
+  Admin: '/admin/overview',
   Manager: '/dashboard',
   Staff: '/dashboard',
   // App này chỉ cho nội bộ — Driver dùng app parking-driver riêng; nếu lỡ đăng nhập ở đây thì về login.

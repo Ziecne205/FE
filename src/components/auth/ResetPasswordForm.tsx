@@ -15,6 +15,9 @@ import { useResetPassword } from '@/hooks/usePasswordReset'
 
 const schema = z
   .object({
+    otp: z
+      .string()
+      .regex(/^\d{6}$/, 'Mã OTP gồm 6 chữ số'),
     password: z
       .string()
       .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
@@ -27,7 +30,7 @@ const schema = z
   })
 type FormData = z.infer<typeof schema>
 
-export function ResetPasswordForm({ token }: { token: string | null }) {
+export function ResetPasswordForm() {
   const router = useRouter()
   const reset = useResetPassword()
   const [showPassword, setShowPassword] = useState(false)
@@ -38,29 +41,12 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { password: '', confirmPassword: '' },
+    defaultValues: { otp: '', password: '', confirmPassword: '' },
   })
-
-  // Missing/blank token → link was malformed or manually visited.
-  if (!token) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
-        </div>
-        <Link
-          href="/forgot-password"
-          className="block text-center text-sm text-blue-600 hover:underline"
-        >
-          Yêu cầu liên kết mới
-        </Link>
-      </div>
-    )
-  }
 
   const onSubmit = (data: FormData) => {
     reset.mutate(
-      { token, newPassword: data.password },
+      { otp: data.otp, newPassword: data.password },
       {
         onSuccess: () => {
           toast.success('Đặt lại mật khẩu thành công, vui lòng đăng nhập lại')
@@ -72,6 +58,24 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div>
+        <Label htmlFor="rp-otp" className="block text-sm font-medium text-gray-900 mb-2">
+          Mã OTP
+        </Label>
+        <Input
+          id="rp-otp"
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          autoComplete="one-time-code"
+          placeholder="6 chữ số"
+          disabled={reset.isPending}
+          className="tracking-[0.4em] text-center font-mono"
+          {...register('otp')}
+        />
+        {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp.message}</p>}
+      </div>
+
       <div>
         <Label htmlFor="rp-password" className="block text-sm font-medium text-gray-900 mb-2">
           Mật khẩu mới
@@ -117,9 +121,14 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
         {reset.isPending ? 'Đang đặt lại...' : 'Đặt lại mật khẩu'}
       </Button>
 
-      <Link href="/login" className="block text-center text-sm text-blue-600 hover:underline">
-        Quay lại đăng nhập
-      </Link>
+      <div className="flex items-center justify-between text-sm">
+        <Link href="/forgot-password" className="text-blue-600 hover:underline">
+          Gửi lại mã OTP
+        </Link>
+        <Link href="/login" className="text-blue-600 hover:underline">
+          Quay lại đăng nhập
+        </Link>
+      </div>
     </form>
   )
 }
