@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api, type AppError } from '@/lib/api'
+import { REFRESH_INTERVAL } from '@/lib/constants'
 import type { LotAvailability, Slot } from '@/types/model'
 import { mapSlot, mapVehicleType, mapManagerAvailability, type BeSlot, type BeVehicleType, type BeManagerAvailability } from '@/lib/beApi'
 
@@ -32,6 +33,7 @@ export function useAvailability() {
       const raw = await api.get<BeManagerAvailability>('/manager/availability')
       return mapManagerAvailability(raw)
     },
+    refetchInterval: REFRESH_INTERVAL, // real-time headroom
   })
 }
 
@@ -43,6 +45,7 @@ export function useLotSlots() {
       const list = await api.get<BeSlot[]>('/manager/slots')
       return list.map(mapSlot)
     },
+    refetchInterval: REFRESH_INTERVAL, // live slot map
   })
 }
 

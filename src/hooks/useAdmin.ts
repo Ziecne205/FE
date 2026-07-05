@@ -65,9 +65,9 @@ export function useUpdateUserStatus() {
 
 export function useResetUserPassword() {
   return useMutation<void, AppError, { id: number; newPassword: string }>({
-    // BE nhận body chuỗi thô (raw string).
+    // BE nhận DTO { newPassword } — không gửi chuỗi thô (JSON string sẽ bị lưu kèm dấu ngoặc kép).
     mutationFn: ({ id, newPassword }) =>
-      api.patch<void>(`/admin/users/${id}/reset-password`, newPassword),
+      api.patch<void>(`/admin/users/${id}/reset-password`, { newPassword }),
     onSuccess: () => toast.success('Đã đặt lại mật khẩu'),
     onError: (e) => toast.error(e.message),
   })

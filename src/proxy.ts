@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server'
 // in production you'd validate a JWT cookie here.
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const publicRoutes = ['/login']
+  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password']
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
   void isPublicRoute // placeholder until server-side auth is added
   return NextResponse.next()

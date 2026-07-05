@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,12 +125,12 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
             Ghi nhớ đăng nhập
           </Label>
         </div>
-        <a
-          href="#"
+        <Link
+          href="/forgot-password"
           className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
         >
           Quên mật khẩu?
-        </a>
+        </Link>
       </div>
 
       {/* Submit Button */}
