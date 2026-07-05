@@ -9,7 +9,7 @@ export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exc
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
 
-export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
+const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   Pending: 'Chờ thanh toán',
   Confirmed: 'Đã xác nhận',
   CheckedIn: 'Đã vào bãi',

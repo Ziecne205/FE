@@ -3,7 +3,7 @@
 import { normalizeSpringBootError, type AppError } from './errors'
 import { getAuthToken, notifyUnauthorized } from './session'
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api'
 
 export interface ApiOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
@@ -36,7 +36,7 @@ function isEnvelope(p: unknown): p is Envelope {
  *   stale/expired session can't linger client-side.
  * - Mocks that still return un-enveloped JSON are passed through unchanged.
  */
-export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
+async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
   const token = getAuthToken()

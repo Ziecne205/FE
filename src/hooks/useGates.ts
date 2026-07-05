@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import type { BeGate } from '@/lib/beApi'
 
 /** Danh sách cổng vào/ra — GET /gates. */
-export function useGates() {
+function useGates() {
   return useQuery({
     queryKey: ['gates'],
     queryFn: () => api.get<BeGate[]>('/gates'),

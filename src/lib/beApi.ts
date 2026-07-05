@@ -299,7 +299,7 @@ export function mapFeeConfig(c: BeFeeConfig): FeeConfig {
   }
 }
 
-export function mapAvailability(info: BeParkingInfo): LotAvailability {
+function mapAvailability(info: BeParkingInfo): LotAvailability {
   return {
     byVehicleType: (info.availabilityByVehicleType ?? []).map((a) => ({
       vehicleTypeName: a.vehicleTypeName,

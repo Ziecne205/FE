@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
  * Calculate parking fee based on duration in minutes
  * Rounds up to nearest hour
  */
-export function calculateParkingFee(durationMinutes: number): number {
+function calculateParkingFee(durationMinutes: number): number {
   const hours = Math.ceil(durationMinutes / 60);
   return hours * PRICING.BASE_RATE;
 }
@@ -59,7 +59,7 @@ export function formatDateTime(date: string | Date): string {
 /**
  * Format date only
  */
-export function formatDate(date: string | Date, format?: string): string {
+function formatDate(date: string | Date, format?: string): string {
   const dateObj = new Date(date);
 
   if (format === 'dd/MM') {
@@ -78,7 +78,7 @@ export function formatDate(date: string | Date, format?: string): string {
 /**
  * Format time only
  */
-export function formatTime(date: string | Date): string {
+function formatTime(date: string | Date): string {
   return new Intl.DateTimeFormat('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -129,7 +129,7 @@ export function getStatusColor(status: string): string {
 /**
  * Parse slot name to extract floor, zone, and number
  */
-export function parseSlotName(slotName: string): { floor: number; zone: string; number: number } | null {
+function parseSlotName(slotName: string): { floor: number; zone: string; number: number } | null {
   const match = slotName.match(/^F(\d+)-([A-Z])-(\d+)$/);
   if (!match) return null;
 
@@ -143,6 +143,6 @@ export function parseSlotName(slotName: string): { floor: number; zone: string; 
 /**
  * Generate slot name from components
  */
-export function generateSlotName(floor: number, zone: string, number: number): string {
+function generateSlotName(floor: number, zone: string, number: number): string {
   return `F${floor}-${zone}-${String(number).padStart(2, '0')}`;
 }

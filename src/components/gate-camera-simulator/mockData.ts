@@ -40,7 +40,7 @@ export const MOCK_INITIAL_LOG: EventLogEntry[] = [
 ]
 
 // Canned entry scan responses keyed by scenario
-export const CANNED_ENTRY_SUCCESS = {
+const CANNED_ENTRY_SUCCESS = {
   admitted: true,
   sessionId: 'sess-mock-001',
   reservationMatched: true,
@@ -48,25 +48,25 @@ export const CANNED_ENTRY_SUCCESS = {
   message: 'Xe vào thành công. Chỗ đỗ gợi ý: B1-A02',
 }
 
-export const CANNED_ENTRY_SCAN_FAILED = {
+const CANNED_ENTRY_SCAN_FAILED = {
   admitted: false,
   reason: 'SCAN_FAILED' as const,
   message: 'Không nhận diện được biển số. Vui lòng nhập tay.',
 }
 
-export const CANNED_ENTRY_MISMATCH = {
+const CANNED_ENTRY_MISMATCH = {
   admitted: false,
   reason: 'PLATE_MISMATCH' as const,
   message: 'Biển số không khớp đặt chỗ. Có thể dùng Force Check-in.',
 }
 
-export const CANNED_ENTRY_FULL = {
+const CANNED_ENTRY_FULL = {
   admitted: false,
   reason: 'FULL' as const,
   message: 'Bãi xe đã đầy.',
 }
 
-export const CANNED_EXIT_SUCCESS = {
+const CANNED_EXIT_SUCCESS = {
   sessionId: 'sess-mock-001',
   licensePlate: '30G-123.45',
   entryTime: new Date(Date.now() - 2.5 * 3600_000).toISOString(),
@@ -76,7 +76,7 @@ export const CANNED_EXIT_SUCCESS = {
   paymentMethods: ['Cash', 'QR'],
 }
 
-export const CANNED_FORCE_CHECKIN = {
+const CANNED_FORCE_CHECKIN = {
   admitted: true,
   sessionId: 'sess-mock-002',
   message: 'Force check-in thành công qua QR.',
