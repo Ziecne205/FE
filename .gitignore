@@ -42,3 +42,4 @@ agents/
 scripts/
 .claude/
 .stitch/
+.agents/

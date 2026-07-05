@@ -162,23 +162,45 @@ export interface AuditFilter {
   to?: string
 }
 
-export function useAuditLogs(filter: AuditFilter = {}) {
+/** BE PageResponse<T> — simple pagination envelope. */
+export interface AuditPage {
+  content: AuditLogItem[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export function useAuditLogs(filter: AuditFilter = {}, page = 0, size = 20) {
   return useQuery({
-    queryKey: ['admin', 'audit', filter],
-    queryFn: () => {
+    queryKey: ['admin', 'audit', filter, page, size],
+    // Chỉ chế độ "Tất cả" phân trang phía server; các chế độ lọc trả mảng → gói thành 1 trang.
+    queryFn: async (): Promise<AuditPage> => {
+      const wrap = (arr: AuditLogItem[]): AuditPage => ({
+        content: arr,
+        page: 0,
+        size: arr.length,
+        totalElements: arr.length,
+        totalPages: 1,
+      })
       if (filter.action)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-action?action=${encodeURIComponent(filter.action)}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(
+            `/admin/audit-logs/by-action?action=${encodeURIComponent(filter.action)}`,
+          ),
         )
       if (filter.entityName)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-entity?entityName=${encodeURIComponent(filter.entityName)}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(
+            `/admin/audit-logs/by-entity?entityName=${encodeURIComponent(filter.entityName)}`,
+          ),
         )
       if (filter.from && filter.to)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-date?from=${filter.from}&to=${filter.to}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(`/admin/audit-logs/by-date?from=${filter.from}&to=${filter.to}`),
         )
-      return api.get<AuditLogItem[]>('/admin/audit-logs')
+      return api.get<AuditPage>(`/admin/audit-logs?page=${page}&size=${size}`)
     },
+    placeholderData: (prev) => prev, // keep previous page visible while the next loads
   })
 }

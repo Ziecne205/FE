@@ -31,10 +31,14 @@ export function AuditLogs() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [applied, setApplied] = useState<AuditFilter>({})
+  const [page, setPage] = useState(0)
 
-  const { data: logs = [], isLoading, refetch } = useAuditLogs(applied)
+  const { data, isLoading, refetch } = useAuditLogs(applied, page)
+  const logs = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
 
   function apply() {
+    setPage(0) // luôn về trang đầu khi đổi bộ lọc
     if (mode === 'action') setApplied({ action: actionText.trim() })
     else if (mode === 'entity') setApplied({ entityName: entityText.trim() })
     else if (mode === 'date' && from && to) setApplied({ from, to })
@@ -140,6 +144,30 @@ export function AuditLogs() {
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end gap-3 text-sm">
+          <span className="text-gray-500">
+            Trang {page + 1}/{totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            Trước
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Sau
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
