@@ -123,7 +123,7 @@ export function AuditLogs() {
                       {log.createdAt ? formatDateTime(log.createdAt) : '—'}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {log.user?.fullName ?? log.user?.username ?? '—'}
+                      {log.userFullName ?? log.userName ?? '—'}
                     </TableCell>
                     <TableCell className="font-mono text-xs">{log.action}</TableCell>
                     <TableCell className="text-sm">

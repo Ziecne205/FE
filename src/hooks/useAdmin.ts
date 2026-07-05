@@ -35,7 +35,9 @@ export interface SystemConfigItem {
 
 export interface AuditLogItem {
   logId: number
-  user?: { userId: number; username?: string; fullName?: string } | null
+  // BE @JsonIgnore quan hệ user, phơi phẳng tên người thực hiện qua getter.
+  userFullName?: string | null
+  userName?: string | null
   action: string
   entityName: string
   entityId?: string | null
