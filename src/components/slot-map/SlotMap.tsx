@@ -6,6 +6,7 @@ import { ZoneSection } from './ZoneSection'
 import { SlotDetailPanel } from './SlotDetailPanel'
 import { MaintenancePanel } from './MaintenancePanel'
 import { useSlotMap } from '@/hooks/useSlotMap'
+import { useAuthStore } from '@/store'
 import type { Slot } from '@/types/model'
 
 /**
@@ -15,6 +16,8 @@ import type { Slot } from '@/types/model'
  */
 export function SlotMap() {
   const map = useSlotMap()
+  const role = useAuthStore((s) => s.user?.role)
+  const canManage = role === 'Manager' || role === 'Admin'
 
   const handleSlotClick = (slot: Slot) => {
     if (map.maintenanceMode) {
@@ -35,6 +38,7 @@ export function SlotMap() {
         onFloorChange={map.setActiveFloor}
         maintenanceMode={map.maintenanceMode}
         onToggleMaintenance={map.enterMaintenanceMode}
+        canManage={canManage}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -85,6 +89,7 @@ export function SlotMap() {
               isLoading={map.isLocking}
               onToggleMaintenance={map.toggleSlotMaintenance}
               onClose={map.closeDetail}
+              canManage={canManage}
             />
           ) : (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">

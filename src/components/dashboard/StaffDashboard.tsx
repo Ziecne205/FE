@@ -11,9 +11,11 @@ interface StaffDashboardProps {
   stats: OccupancyStats;
   onRefresh?: () => void;
   onManualEntry?: () => void;
+  loading?: boolean;
+  error?: boolean;
 }
 
-export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboardProps) {
+export function StaffDashboard({ stats, onRefresh, onManualEntry, loading, error }: StaffDashboardProps) {
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
@@ -43,6 +45,21 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
         )}
       </div>
 
+      {/* Không tải được dữ liệu → báo lỗi + cho thử lại (không để trắng cả trang) */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Không tải được dữ liệu bãi đỗ. Vui lòng thử lại.
+          </span>
+          {onRefresh && (
+            <Button variant="outline" size="sm" onClick={onRefresh}>
+              Thử lại
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -50,6 +67,7 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           value={stats.total_slots}
           icon={ParkingCircle}
           iconColor="blue"
+          loading={loading}
         />
 
         <StatsCard
@@ -57,6 +75,7 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           value={stats.available}
           icon={CheckCircle}
           iconColor="green"
+          loading={loading}
         />
 
         <StatsCard
@@ -65,6 +84,7 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           icon={Car}
           iconColor="red"
           badge={`${stats.occupancy_rate}%`}
+          loading={loading}
         />
 
         <StatsCard
@@ -72,6 +92,7 @@ export function StaffDashboard({ stats, onRefresh, onManualEntry }: StaffDashboa
           value={0}
           icon={AlertTriangle}
           iconColor="yellow"
+          loading={loading}
         />
       </div>
 

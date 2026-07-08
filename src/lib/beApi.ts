@@ -59,6 +59,7 @@ export interface BeActiveSession {
   parkedMinutes: number
   isForceCheckIn?: boolean | null  // staff overrode plate mismatch
   isOverstay?: boolean | null      // session exceeded 24h grace period
+  estimatedFee?: number | null     // phí tạm tính theo bảng giá đến hiện tại
 }
 
 export interface BeIncident {
@@ -233,6 +234,7 @@ export function mapActiveSession(s: BeActiveSession): ParkingSession {
     actualSlotCode: s.actualSlotCode ?? undefined,
     entryTime: s.entryTime,
     isPaid: false,
+    totalFee: s.estimatedFee ?? undefined, // phí tạm tính từ BE (null khi chưa có bảng giá)
     status: s.status as SessionStatus,
     isForceCheckIn: s.isForceCheckIn ?? undefined,
     isOverstay: s.isOverstay ?? undefined,

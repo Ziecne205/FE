@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ParkingCircle, CheckCircle, Car, DollarSign } from 'lucide-react';
+import { ParkingCircle, CheckCircle, Car, DollarSign, AlertTriangle } from 'lucide-react';
 import { StatsCard } from './StatsCard';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { REFRESH_INTERVAL } from '@/lib/constants';
 import type { OccupancyStats } from './types';
@@ -10,9 +11,11 @@ import type { OccupancyStats } from './types';
 interface ManagerDashboardProps {
   stats: OccupancyStats;
   onRefresh?: () => void;
+  loading?: boolean;
+  error?: boolean;
 }
 
-export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
+export function ManagerDashboard({ stats, onRefresh, loading, error }: ManagerDashboardProps) {
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
@@ -28,6 +31,20 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Không tải được dữ liệu bãi đỗ. Vui lòng thử lại.
+          </span>
+          {onRefresh && (
+            <Button variant="outline" size="sm" onClick={onRefresh}>
+              Thử lại
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -35,6 +52,7 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
           value={stats.total_slots}
           icon={ParkingCircle}
           iconColor="blue"
+          loading={loading}
         />
 
         <StatsCard
@@ -42,6 +60,7 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
           value={stats.available}
           icon={CheckCircle}
           iconColor="green"
+          loading={loading}
           trend={{
             value: '+5',
             direction: 'up',
@@ -55,6 +74,7 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
           icon={Car}
           iconColor="red"
           badge={`${stats.occupancy_rate}%`}
+          loading={loading}
         />
 
         <StatsCard
@@ -62,6 +82,7 @@ export function ManagerDashboard({ stats, onRefresh }: ManagerDashboardProps) {
           value={formatCurrency(stats.current_revenue)}
           icon={DollarSign}
           iconColor="blue"
+          loading={loading}
           trend={{
             value: '+12%',
             direction: 'up',
