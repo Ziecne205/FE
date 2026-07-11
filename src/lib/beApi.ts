@@ -25,11 +25,6 @@ export interface BeVehicleType {
   dimensions?: string | null
 }
 
-interface BeFloor {
-  floorId: number
-  floorName: string
-}
-
 export interface BeGate {
   gateId: number
   gateName: string
@@ -286,7 +281,13 @@ export function mapPricingPolicy(p: BePricingPolicy): PricingPolicy {
     policyId: String(p.policyId),
     vehicleTypeId: p.vehicleType ? String(p.vehicleType.vehicleTypeId) : '',
     vehicleTypeName: p.vehicleType?.typeName ?? '',
-    hourlyRate: Number(p.basePrice ?? 0), // v3.1 giá phẳng → basePrice là giá/giờ.
+    // Giữ ĐẦY ĐỦ chính sách giá để màn sửa giá hiển thị + gửi lại nguyên vẹn
+    // (BE PUT thay thế toàn bộ → thiếu field nào sẽ bị xoá).
+    basePrice: Number(p.basePrice ?? 0),
+    baseHours: Number(p.baseHours ?? 1),
+    extraHourPrice: Number(p.extraHourPrice ?? 0),
+    nightSurcharge: Number(p.nightSurcharge ?? 0),
+    lostTicketFee: Number(p.lostTicketFee ?? 0),
     status: (p.status as 'Active' | 'Expired') ?? 'Active',
     effectiveDate: p.effectiveDate,
   }

@@ -338,9 +338,9 @@ export const handlers = [
 
   http.put('/api/manager/pricing-policies/:id', async ({ params, request }) => {
     const body = (await request.json()) as Partial<PricingPolicy>
-    if (body.hourlyRate !== undefined && body.hourlyRate < 0) {
+    if (body.basePrice !== undefined && body.basePrice < 0) {
       return HttpResponse.json(
-        { success: false, message: 'Giá/giờ phải ≥ 0', errorCode: 'INVALID_INPUT' },
+        { success: false, message: 'Giá cơ bản phải ≥ 0', errorCode: 'INVALID_INPUT' },
         { status: 422 },
       )
     }

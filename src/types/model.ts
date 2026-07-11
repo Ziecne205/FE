@@ -5,7 +5,9 @@
 
 // ── Status labels (text as returned by API; service maps INT↔label) ─────────────
 export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserved
-export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception';
+// 'Abandoned' là nhãn vận hành phía FE (thẻ "Bỏ dở" ở SessionStatsBar); BE hiện chưa phát ra
+// trạng thái này (mới chỉ có truy vấn nghi vấn bỏ xe) nên số đếm thực tế sẽ là 0 cho tới khi BE hỗ trợ.
+export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception' | 'Abandoned';
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
 
@@ -152,7 +154,11 @@ export interface PricingPolicy {
   policyId: string;
   vehicleTypeId: string;
   vehicleTypeName: string;
-  hourlyRate: number; // VND/giờ
+  basePrice: number; // giá cơ bản cho baseHours đầu tiên (VND)
+  baseHours: number; // số giờ đã gồm trong basePrice
+  extraHourPrice: number; // VND mỗi giờ vượt baseHours
+  nightSurcharge: number; // phụ thu đêm (0 nếu không áp dụng)
+  lostTicketFee: number; // phí mất vé (0 nếu không áp dụng)
   status: 'Active' | 'Expired';
   effectiveDate: string; // ISO
 }

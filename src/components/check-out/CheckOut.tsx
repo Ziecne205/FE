@@ -18,7 +18,7 @@ import { formatCurrency } from '@/lib/utils'
 export function CheckOut() {
   const [plate, setPlate] = useState('')
   const [submitted, setSubmitted] = useState('')
-  const { data: session } = useFindCar(submitted)
+  const { data: session, isError, error } = useFindCar(submitted)
   const payos = useSessionPayosLink()
 
   function search() {
@@ -69,7 +69,13 @@ export function CheckOut() {
         </Button>
       </div>
 
-      {submitted && !session && (
+      {submitted && isError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Lỗi khi tìm phiên: {error?.message ?? 'Vui lòng thử lại.'}
+        </div>
+      )}
+
+      {submitted && !isError && !session && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           Không tìm thấy phiên đang mở cho biển số <span className="font-mono font-semibold">{submitted}</span>.
         </div>

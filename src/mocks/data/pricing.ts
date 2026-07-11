@@ -1,12 +1,16 @@
 import type { PricingPolicy, FeeConfig } from '@/types/model'
 
-// Bảng giá theo giờ — mỗi loại xe một mức (v3.1: giá phẳng).
+// Bảng giá đầy đủ — mỗi loại xe một chính sách (khớp shape PricingPolicy hiện tại).
 export const mockPricingPolicies: PricingPolicy[] = [
   {
     policyId: 'pp-car',
     vehicleTypeId: 'vt-car',
     vehicleTypeName: 'Ô tô',
-    hourlyRate: 10_000,
+    basePrice: 10_000,
+    baseHours: 1,
+    extraHourPrice: 10_000,
+    nightSurcharge: 0,
+    lostTicketFee: 0,
     status: 'Active',
     effectiveDate: '2026-01-01T00:00:00',
   },
@@ -14,7 +18,11 @@ export const mockPricingPolicies: PricingPolicy[] = [
     policyId: 'pp-moto',
     vehicleTypeId: 'vt-moto',
     vehicleTypeName: 'Xe máy',
-    hourlyRate: 5_000,
+    basePrice: 5_000,
+    baseHours: 1,
+    extraHourPrice: 5_000,
+    nightSurcharge: 0,
+    lostTicketFee: 0,
     status: 'Active',
     effectiveDate: '2026-01-01T00:00:00',
   },
