@@ -23,6 +23,9 @@ const ROUTE_ROLES: ReadonlyArray<{ prefix: string; roles: UserRole[] }> = [
   { prefix: '/reports', roles: ['Manager'] },
   { prefix: '/bookings', roles: ['Manager'] },
   // Staff-only operations
+  { prefix: '/check-in', roles: ['Staff'] },
+  { prefix: '/check-out', roles: ['Staff'] },
+  // Legacy routes (nay gộp vào /check-in + /check-out) — vẫn cho truy cập trực tiếp.
   { prefix: '/simulator', roles: ['Staff'] },
   { prefix: '/exit-payment', roles: ['Staff'] },
   // Shared console (Manager + Staff)

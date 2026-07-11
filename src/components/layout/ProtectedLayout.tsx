@@ -22,6 +22,8 @@ const routeTitles: Record<string, string> = {
   '/quota': 'Hạn mức đặt chỗ',
   '/pricing': 'Quản lý giá',
   '/reports': 'Báo cáo',
+  '/check-in': 'Check-in cổng vào',
+  '/check-out': 'Check-out cổng ra',
   '/exit-payment': 'Thanh toán cổng ra',
   '/simulator': 'Mô phỏng Cổng & Camera',
   '/admin/overview': 'Trung tâm Giám sát',

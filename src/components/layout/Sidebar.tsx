@@ -15,7 +15,7 @@ import {
   Plus,
   Sliders,
   CreditCard,
-  Cctv,
+  LogIn,
   DollarSign,
   Users,
   Shield,
@@ -49,8 +49,8 @@ const staffNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
-  { href: '/exit-payment', icon: CreditCard, label: 'Thanh toán' },
-  { href: '/simulator', icon: Cctv, label: 'Mô phỏng Cổng' },
+  { href: '/check-in', icon: LogIn, label: 'Check-in' },
+  { href: '/check-out', icon: CreditCard, label: 'Check-out' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 
