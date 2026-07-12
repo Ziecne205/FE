@@ -14,18 +14,6 @@ export const mockPricingPolicies: PricingPolicy[] = [
     status: 'Active',
     effectiveDate: '2026-01-01T00:00:00',
   },
-  {
-    policyId: 'pp-moto',
-    vehicleTypeId: 'vt-moto',
-    vehicleTypeName: 'Xe máy',
-    basePrice: 5_000,
-    baseHours: 1,
-    extraHourPrice: 5_000,
-    nightSurcharge: 0,
-    lostTicketFee: 0,
-    status: 'Active',
-    effectiveDate: '2026-01-01T00:00:00',
-  },
 ]
 
 export const mockFeeConfig: FeeConfig = {

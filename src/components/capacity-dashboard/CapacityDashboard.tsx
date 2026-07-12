@@ -32,7 +32,7 @@ export function CapacityDashboard({
       {warningMessage && (
         <WarningBanner
           title={warningMessage}
-          detail="Khách vãng lai (xe máy) hiện đang bị chặn vào bãi để đảm bảo chỗ cho khách đã đặt trước và vé tháng."
+          detail="Khách vãng lai cho loại xe bị ảnh hưởng hiện đang bị chặn vào bãi để đảm bảo chỗ cho khách đã đặt trước và vé tháng."
         />
       )}
 
