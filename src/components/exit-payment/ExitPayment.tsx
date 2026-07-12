@@ -7,7 +7,6 @@ import { formatCurrency, calculateDuration } from '@/lib/utils'
 import { usePayParking } from '@/hooks/usePayParking'
 import { FeeBreakdown } from './FeeBreakdown'
 import { PaymentQrPanel } from './PaymentQrPanel'
-import { FeedbackForm } from './FeedbackForm'
 import type { ExitPaymentProps, FeeBreakdownLine, PaymentMethod } from './types'
 
 function computeBreakdown(entryTime: string, totalFee: number): FeeBreakdownLine[] {
@@ -82,7 +81,6 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
           <CheckCircle2 className="h-4 w-4" />
           Barie đang mở
         </div>
-        <FeedbackForm sessionId={sessionId} />
       </div>
     )
   }
