@@ -41,13 +41,6 @@ interface AuthState {
   _hasHydrated: boolean
   _setHasHydrated: (v: boolean) => void
   login: (username: string, password: string) => Promise<void>
-  register: (fields: {
-    username: string
-    fullName: string
-    phone?: string
-    email?: string
-    password: string
-  }) => Promise<void>
   logout: () => void
   setUser: (user: User) => void
 }
@@ -104,37 +97,6 @@ export const useAuthStore = create<AuthState>()(
           setAuthToken(null)
           set({ isLoading: false })
           toast.error(errMessage(error, 'Đăng nhập thất bại'))
-          throw error
-        }
-      },
-
-      register: async (fields) => {
-        set({ isLoading: true })
-        try {
-          // BE RegisterRequest: { username, password, fullName, phoneNumber?, email?, roleName }.
-          const res = await api.post<LoginResponse>('/auth/register', {
-            username: fields.username,
-            password: fields.password,
-            fullName: fields.fullName,
-            phoneNumber: fields.phone,
-            email: fields.email,
-            roleName: 'Driver',
-          })
-          setAuthToken(res.token)
-          const registeredUser: User = {
-            id: res.username,
-            email: fields.email ?? '',
-            phone: fields.phone,
-            fullName: fields.fullName,
-            role: mapRole(res.roleName),
-            status: 'Active',
-          }
-          set({ user: registeredUser, token: res.token, isAuthenticated: true, isLoading: false })
-          toast.success('Đăng ký thành công')
-        } catch (error) {
-          setAuthToken(null)
-          set({ isLoading: false })
-          toast.error(errMessage(error, 'Đăng ký thất bại'))
           throw error
         }
       },
