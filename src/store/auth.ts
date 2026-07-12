@@ -35,6 +35,11 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  /** False until the persisted session finishes rehydrating from localStorage.
+   *  Guards route redirects so a full page reload doesn't bounce to /login before
+   *  the stored token is restored into the API layer. */
+  _hasHydrated: boolean
+  _setHasHydrated: (v: boolean) => void
   login: (username: string, password: string) => Promise<void>
   register: (fields: {
     username: string
@@ -54,6 +59,8 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
+      _setHasHydrated: (v: boolean) => set({ _hasHydrated: v }),
 
       login: async (username: string, password: string) => {
         set({ isLoading: true })
@@ -160,10 +167,13 @@ export const useAuthStore = create<AuthState>()(
         return persisted as { user: User | null; token: string | null }
       },
       // Rehydrate the session bridge and derive auth from an actual token.
+      // _setHasHydrated fires a reactive update (so guards re-render) AFTER the token
+      // has been pushed into the API layer — never redirect before this runs.
       onRehydrateStorage: () => (state) => {
         if (!state) return
         setAuthToken(state.token ?? null)
         state.isAuthenticated = !!state.token
+        state._setHasHydrated(true)
       },
     }
   )

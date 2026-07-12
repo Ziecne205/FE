@@ -59,7 +59,7 @@ export function formatDateTime(date: string | Date): string {
 /**
  * Format date only
  */
-function formatDate(date: string | Date, format?: string): string {
+export function formatDate(date: string | Date, format?: string): string {
   const dateObj = new Date(date);
 
   if (format === 'dd/MM') {

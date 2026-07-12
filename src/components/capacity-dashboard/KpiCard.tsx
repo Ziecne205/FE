@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 interface KpiCardProps {
@@ -44,12 +45,15 @@ export function KpiCard({
           <span className="text-sm text-gray-500 mb-1">{suffix}</span>
         )}
         {actionLabel && (
-          <a
+          // Next.js <Link> = client-side navigation. A plain <a href> would do a full
+          // page reload, which redirects to /login before the persisted auth token
+          // rehydrates into the API layer (see ProtectedLayout hydration guard).
+          <Link
             href={actionHref}
             className="text-sm text-blue-600 hover:underline font-medium ml-auto"
           >
             {actionLabel}
-          </a>
+          </Link>
         )}
       </div>
 
