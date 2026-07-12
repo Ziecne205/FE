@@ -25,7 +25,7 @@ export function CheckIn() {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Check-in cổng vào</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Check-in cổng vào</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             Quét biển số, nhập tay khi camera lỗi, ghi đè có kiểm toán.
           </p>

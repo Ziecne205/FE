@@ -1,108 +1,62 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, QrCode, Loader2, ExternalLink } from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { useMemo, useState } from 'react'
+import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { ExitPayment } from '@/components/exit-payment'
-import { useFindCar } from '@/hooks/useSessions'
-import { useSessionPayosLink } from '@/hooks/useSessionPayosLink'
-import { formatCurrency } from '@/lib/utils'
+import { CheckoutSessionList } from './CheckoutSessionList'
+import { CheckoutModal } from './CheckoutModal'
+import { useOpenSessions } from '@/hooks/useSessions'
+import type { ParkingSession } from '@/types/model'
 
 /**
- * Trang Check-out (cổng ra): tìm phiên theo biển số → hiển thị phí động (BE tính theo
- * thời gian đã đỗ) → thanh toán (tiền mặt / QR PayOS động) → check-out thật + mở barie.
- * Tái sử dụng ExitPayment cho luồng phí + xác nhận; QR PayOS là link thật từ BE.
+ * Trang Check-out (cổng ra). Demo không có camera quét biển số nên hiển thị DANH SÁCH xe
+ * đang đỗ + nút Check-out từng xe → mở modal để Staff check-out thủ công (tính phí động,
+ * QR PayOS thật, xác nhận mở barie). Search bar lọc danh sách theo biển số / ô đỗ.
  */
 export function CheckOut() {
-  const [plate, setPlate] = useState('')
-  const [submitted, setSubmitted] = useState('')
-  const { data: session, isError, error } = useFindCar(submitted)
-  const payos = useSessionPayosLink()
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<ParkingSession | null>(null)
+  const { data: sessions, isLoading } = useOpenSessions()
 
-  function search() {
-    const p = plate.trim().toUpperCase()
-    if (p.length < 4) {
-      toast.error('Nhập ít nhất 4 ký tự biển số')
-      return
-    }
-    setSubmitted(p)
-  }
-
-  function generatePayosQr() {
-    if (!session) return
-    payos.mutate(
-      { sessionId: session.sessionId },
-      {
-        onSuccess: (link) => {
-          window.open(link.checkoutUrl, '_blank', 'noopener')
-          toast.success(`Đã tạo QR PayOS ${formatCurrency(link.amount)} — khách quét để thanh toán`)
-        },
-        onError: (e) => toast.error(e.message),
-      },
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return sessions
+    return sessions.filter(
+      (s) =>
+        s.licensePlate.toLowerCase().includes(q) ||
+        (s.actualSlotCode ?? '').toLowerCase().includes(q),
     )
-  }
+  }, [sessions, search])
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold text-gray-900">Check-out cổng ra</h2>
-        <p className="text-sm text-gray-500">Tìm phiên theo biển số, tính phí động và thu tiền.</p>
+        <p className="text-sm text-gray-500">
+          Demo chưa có camera quét biển số — chọn xe trong danh sách rồi check-out thủ công.
+        </p>
       </div>
 
-      {/* Plate search */}
+      {/* Search bar — lọc danh sách theo biển số / ô đỗ */}
       <div className="flex flex-col items-stretch gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="Nhập biển số xe ra…"
-            value={plate}
-            onChange={(e) => setPlate(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && search()}
+            placeholder="Tìm theo biển số hoặc ô đỗ…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value.toUpperCase())}
             className="pl-9 font-mono uppercase"
           />
         </div>
-        <Button onClick={search} className="gap-1.5">
-          <Search className="h-4 w-4" />
-          Tìm phiên
-        </Button>
       </div>
 
-      {submitted && isError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Lỗi khi tìm phiên: {error?.message ?? 'Vui lòng thử lại.'}
-        </div>
+      {isLoading ? (
+        <div className="py-16 text-center text-gray-500">Đang tải danh sách xe đang đỗ...</div>
+      ) : (
+        <CheckoutSessionList sessions={filtered} onCheckout={setSelected} />
       )}
 
-      {submitted && !isError && !session && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          Không tìm thấy phiên đang mở cho biển số <span className="font-mono font-semibold">{submitted}</span>.
-        </div>
-      )}
-
-      {session && (
-        <div className="space-y-4">
-          {/* Real dynamic PayOS QR action */}
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm text-blue-800">
-              <QrCode className="h-4 w-4" />
-              Tạo mã QR PayOS (số tiền động theo thời gian đỗ)
-            </div>
-            <Button size="sm" onClick={generatePayosQr} disabled={payos.isPending} className="gap-1.5">
-              {payos.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-              Tạo QR PayOS
-            </Button>
-          </div>
-
-          <ExitPayment
-            sessionId={session.sessionId}
-            licensePlate={session.licensePlate}
-            entryTime={session.entryTime}
-            totalFee={session.totalFee ?? 0}
-          />
-        </div>
-      )}
+      <CheckoutModal session={selected} onClose={() => setSelected(null)} />
     </div>
   )
 }
