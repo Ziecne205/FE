@@ -5,11 +5,13 @@
 
 // ── Status labels (text as returned by API; service maps INT↔label) ─────────────
 export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserved
-export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Abandoned';
+// 'Abandoned' là nhãn vận hành phía FE (thẻ "Bỏ dở" ở SessionStatsBar); BE hiện chưa phát ra
+// trạng thái này (mới chỉ có truy vấn nghi vấn bỏ xe) nên số đếm thực tế sẽ là 0 cho tới khi BE hỗ trợ.
+export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception' | 'Abandoned';
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
 
-export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
+const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   Pending: 'Chờ thanh toán',
   Confirmed: 'Đã xác nhận',
   CheckedIn: 'Đã vào bãi',
@@ -34,7 +36,7 @@ export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Driver';
 // ── Core entities ───────────────────────────────────────────────────────────────
 export interface VehicleType {
   id: string;
-  name: string; // "Ô tô" | "Xe máy" | "Xe tải"
+  name: string; // chỉ ô tô, ví dụ "Ô tô"
 }
 
 export interface Slot {
@@ -74,6 +76,8 @@ export interface ParkingSession {
   totalFee?: number;
   isPaid: boolean;
   status: SessionStatus;
+  isForceCheckIn?: boolean; // staff overrode a plate mismatch at check-in
+  isOverstay?: boolean;     // session ran past the 24-hour overstay grace period
 }
 
 export interface Payment {
@@ -150,7 +154,11 @@ export interface PricingPolicy {
   policyId: string;
   vehicleTypeId: string;
   vehicleTypeName: string;
-  hourlyRate: number; // VND/giờ
+  basePrice: number; // giá cơ bản cho baseHours đầu tiên (VND)
+  baseHours: number; // số giờ đã gồm trong basePrice
+  extraHourPrice: number; // VND mỗi giờ vượt baseHours
+  nightSurcharge: number; // phụ thu đêm (0 nếu không áp dụng)
+  lostTicketFee: number; // phí mất vé (0 nếu không áp dụng)
   status: 'Active' | 'Expired';
   effectiveDate: string; // ISO
 }

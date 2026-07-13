@@ -44,7 +44,7 @@ export function useCapacityDashboard(): UseCapacityDashboardReturn {
   const { data: availability, refetch, isFetching, dataUpdatedAt } = useAvailability();
   const { data: openIncidents = 0 } = useOpenIncidentCount();
 
-  const vehicleTypes = availability?.byVehicleType ?? [];
+  const vehicleTypes = useMemo(() => availability?.byVehicleType ?? [], [availability]);
   const kpi = useMemo(() => computeKpi(vehicleTypes, openIncidents), [vehicleTypes, openIncidents]);
   const warningMessage = useMemo(() => computeWarning(vehicleTypes), [vehicleTypes]);
 

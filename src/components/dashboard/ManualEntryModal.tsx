@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ export function ManualEntryModal({
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch,
+    control,
     reset,
   } = useForm<ManualEntryFormData>({
     resolver: zodResolver(manualEntrySchema),
@@ -62,7 +62,9 @@ export function ManualEntryModal({
     },
   });
 
-  const selectedSlotId = watch('slot_id');
+  // useWatch (thay vì watch()) — API dạng hook, tương thích React Compiler.
+  const selectedSlotId = useWatch({ control, name: 'slot_id' });
+  const vehicleType = useWatch({ control, name: 'vehicle_type' });
 
   const handleFormSubmit = async (data: ManualEntryFormData) => {
     await onSubmit(data);
@@ -142,7 +144,7 @@ export function ManualEntryModal({
               Loại xe <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={watch('vehicle_type')}
+              value={vehicleType}
               onValueChange={(value) => setValue('vehicle_type', value as 'car', { shouldValidate: true })}
             >
               <SelectTrigger className={errors.vehicle_type ? 'border-red-500' : ''}>

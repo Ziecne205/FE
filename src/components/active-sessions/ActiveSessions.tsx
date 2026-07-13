@@ -14,7 +14,6 @@ import {
 import { Search } from 'lucide-react'
 import { SessionStatsBar } from './SessionStatsBar'
 import { SessionTable } from './SessionTable'
-import { FindCarSearch } from './FindCarSearch'
 import { useOpenSessions } from '@/hooks/useSessions'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import type { SessionStatusFilter } from './types'
@@ -49,8 +48,6 @@ export function ActiveSessions() {
       </div>
 
       <SessionStatsBar sessions={sessions} />
-
-      <FindCarSearch />
 
       <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm md:flex-row">
         <div className="relative w-full md:w-80">

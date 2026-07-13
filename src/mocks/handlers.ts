@@ -35,7 +35,6 @@ const usersStore: Record<string, UserProfile> = Object.fromEntries(
 const vehiclesStore: Record<string, SavedVehicle[]> = {
   'u-driver': [
     { id: 'sv-1', licensePlate: '29A-123.45', vehicleTypeId: 'vt-car' },
-    { id: 'sv-2', licensePlate: '30G-789.12', vehicleTypeId: 'vt-moto' },
   ],
 }
 
@@ -338,9 +337,9 @@ export const handlers = [
 
   http.put('/api/manager/pricing-policies/:id', async ({ params, request }) => {
     const body = (await request.json()) as Partial<PricingPolicy>
-    if (body.hourlyRate !== undefined && body.hourlyRate < 0) {
+    if (body.basePrice !== undefined && body.basePrice < 0) {
       return HttpResponse.json(
-        { success: false, message: 'Giá/giờ phải ≥ 0', errorCode: 'INVALID_INPUT' },
+        { success: false, message: 'Giá cơ bản phải ≥ 0', errorCode: 'INVALID_INPUT' },
         { status: 422 },
       )
     }
@@ -554,6 +553,38 @@ export const handlers = [
 
   http.post('/api/auth/logout', () => {
     return HttpResponse.json({ success: true })
+  }),
+
+  // Forgot / reset password — proposed contract, see docs/handoff-forgot-password.md.
+  http.post('/api/auth/forgot-password', async ({ request }) => {
+    const { username } = (await request.json()) as { username: string }
+    // Always a generic 200 (anti-enumeration). DEV ONLY: echo a token so the flow is
+    // testable end-to-end; the real backend delivers it out-of-band and returns nothing.
+    const account = findAccountByEmail(username)
+    const devResetToken = account ? `reset-${btoa(encodeURIComponent(username))}` : undefined
+    const message = 'Nếu tài khoản tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi.'
+    return HttpResponse.json({ success: true, message, data: { message, devResetToken } })
+  }),
+
+  http.post('/api/auth/reset-password', async ({ request }) => {
+    const { token, newPassword } = (await request.json()) as {
+      token: string
+      newPassword: string
+    }
+    // `expired` simulates an invalid/expired token so the error path is demoable.
+    if (!token || token === 'expired' || !token.startsWith('reset-')) {
+      return HttpResponse.json(
+        { success: false, message: 'Liên kết đặt lại không hợp lệ hoặc đã hết hạn', errorCode: 'INVALID_TOKEN' },
+        { status: 400 },
+      )
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return HttpResponse.json(
+        { success: false, message: 'Mật khẩu phải có ít nhất 6 ký tự', errorCode: 'VALIDATION_ERROR' },
+        { status: 400 },
+      )
+    }
+    return HttpResponse.json({ success: true, message: 'Đặt lại mật khẩu thành công', data: null })
   }),
 
   // ── Gate / Camera simulator endpoints ─────────────────────────────────────────

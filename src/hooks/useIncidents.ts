@@ -47,10 +47,10 @@ export interface ResolveIncidentInput {
 export function useResolveIncident() {
   const queryClient = useQueryClient()
   return useMutation({
-    // BE: PATCH /staff/incidents/{id}/resolve — body là CHUỖI thô (resolutionNotes),
-    // không phải JSON object. api.patch sẽ JSON.stringify("...") → hợp lệ với @RequestBody String.
-    mutationFn: ({ incidentId, resolutionNotes }: ResolveIncidentInput) =>
-      api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve`, resolutionNotes ?? ''),
+    // BE: PATCH /staff/incidents/{id}/resolve with JSON body
+    mutationFn: ({ incidentId, resolutionNotes }: ResolveIncidentInput) => {
+      return api.patch<BeIncident>(`/staff/incidents/${incidentId}/resolve`, { resolutionNotes })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
       toast.success('Đã xử lý sự cố')
