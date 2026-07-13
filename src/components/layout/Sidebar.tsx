@@ -13,6 +13,7 @@ import {
   HelpCircle,
   LogOut,
   Plus,
+  UserPlus,
   Sliders,
   CreditCard,
   LogIn,
@@ -43,6 +44,7 @@ const managerNavItems = [
   { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
   { href: '/pricing', icon: DollarSign, label: 'Quản lý giá' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
+  { href: '/accounts', icon: UserPlus, label: 'Tạo tài khoản' },
 ];
 
 const staffNavItems = [
