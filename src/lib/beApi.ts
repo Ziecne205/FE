@@ -73,7 +73,7 @@ export interface BeIncident {
 }
 
 export interface BeReservation {
-  reservationId: number
+  reservationId: string
   // BE @JsonIgnore user & vehicleType, phơi phẳng qua getter:
   userId?: number | null
   vehicleTypeId?: number | null
