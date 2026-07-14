@@ -53,6 +53,31 @@ export function useUsers() {
   })
 }
 
+export interface CreateUserInput {
+  username: string
+  password: string
+  fullName: string
+  phoneNumber?: string
+  email?: string
+  roleName: string // 'Manager' | 'Staff' (BE chặn 'Admin')
+}
+
+/**
+ * Tạo tài khoản nội bộ — POST /api/admin/users. BE cho phép cả Admin và Manager gọi
+ * (Manager tạo được Manager/Staff, không tạo được Admin). Chỉ dùng cho phần console.
+ */
+export function useCreateUser() {
+  const qc = useQueryClient()
+  return useMutation<AdminUser, AppError, CreateUserInput>({
+    mutationFn: (body) => api.post<AdminUser>('/admin/users', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+      toast.success('Đã tạo tài khoản')
+    },
+    onError: (e) => toast.error(e.message),
+  })
+}
+
 export function useUpdateUserStatus() {
   const qc = useQueryClient()
   return useMutation<AdminUser, AppError, { id: number; status: string }>({

@@ -1,8 +1,8 @@
 'use client'
 
-import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
-import { ReactNode, useState, useEffect } from 'react'
-import { Toaster, toast } from 'sonner'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactNode, useState } from 'react'
+import { Toaster } from 'sonner'
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -23,35 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
       })
   )
 
-  // MSW is only needed when talking to mocks (no real API base). In production the
-  // import is skipped and we start ready — no first-paint "initializing" flash.
-  const needsMocking = !process.env.NEXT_PUBLIC_API_BASE
-  const [mockingReady, setMockingReady] = useState(!needsMocking)
-
-  useEffect(() => {
-    if (!needsMocking) return
-    let active = true
-    import('@/mocks')
-      .then(({ initMocks }) => initMocks())
-      .then(() => {
-        if (active) setMockingReady(true)
-      })
-    return () => {
-      active = false
-    }
-  }, [needsMocking])
-
-  if (!mockingReady) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Đang khởi tạo...</p>
-        </div>
-      </div>
-    )
-  }
-
+  // App runs against the real backend (NEXT_PUBLIC_API_BASE) — no MSW mock bootstrap.
   return (
     <QueryClientProvider client={queryClient}>
       {children}

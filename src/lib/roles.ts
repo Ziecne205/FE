@@ -22,6 +22,8 @@ const ROUTE_ROLES: ReadonlyArray<{ prefix: string; roles: UserRole[] }> = [
   { prefix: '/pricing', roles: ['Manager'] },
   { prefix: '/reports', roles: ['Manager'] },
   { prefix: '/bookings', roles: ['Manager'] },
+  // Tạo tài khoản nội bộ (Manager tạo Manager/Staff). Admin là superset -> tự động vào được.
+  { prefix: '/accounts', roles: ['Manager'] },
   // Staff-only operations
   { prefix: '/check-in', roles: ['Staff'] },
   { prefix: '/check-out', roles: ['Staff'] },
