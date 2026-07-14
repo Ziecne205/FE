@@ -82,8 +82,8 @@ export function useSlotMap() {
     })
   }
 
-  /** Apply maintenance lock to the selected slots. */
-  function requestLock() {
+  /** Fire the API directly, relying on backend to enforce capacity crashes natively. */
+  function confirmLock() {
     const codes = Array.from(selected)
     if (!codes.length) return
     setMaintenance.mutate(
@@ -128,7 +128,7 @@ export function useSlotMap() {
     setReason,
     notes,
     setNotes,
-    requestLock,
+    confirmLock,
     isLocking: setMaintenance.isPending,
   }
 }

@@ -13,14 +13,16 @@ import {
   HelpCircle,
   LogOut,
   Plus,
+  UserPlus,
   Sliders,
   CreditCard,
-  Cctv,
+  LogIn,
   DollarSign,
   Users,
   Shield,
   Settings,
   ScrollText,
+  MonitorDot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,19 +44,21 @@ const managerNavItems = [
   { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
   { href: '/pricing', icon: DollarSign, label: 'Quản lý giá' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
+  { href: '/accounts', icon: UserPlus, label: 'Tạo tài khoản' },
 ];
 
 const staffNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', filled: true },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
-  { href: '/exit-payment', icon: CreditCard, label: 'Thanh toán' },
-  { href: '/simulator', icon: Cctv, label: 'Mô phỏng Cổng' },
+  { href: '/check-in', icon: LogIn, label: 'Check-in' },
+  { href: '/check-out', icon: CreditCard, label: 'Check-out' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 
 // Phân hệ Quản trị viên — chỉ Admin thấy (gắn thêm vào sau nav của Manager).
 const adminNavItems = [
+  { href: '/admin/overview', icon: MonitorDot, label: 'Trung tâm Giám sát' },
   { href: '/admin/users', icon: Users, label: 'Tài khoản' },
   { href: '/admin/rbac', icon: Shield, label: 'Phân quyền' },
   { href: '/admin/system-config', icon: Settings, label: 'Cấu hình hệ thống' },

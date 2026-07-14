@@ -25,11 +25,6 @@ export interface BeVehicleType {
   dimensions?: string | null
 }
 
-interface BeFloor {
-  floorId: number
-  floorName: string
-}
-
 export interface BeGate {
   gateId: number
   gateName: string
@@ -57,6 +52,9 @@ export interface BeActiveSession {
   hasReservation: boolean
   hasCard: boolean
   parkedMinutes: number
+  isForceCheckIn?: boolean | null  // staff overrode plate mismatch
+  isOverstay?: boolean | null      // session exceeded 24h grace period
+  estimatedFee?: number | null     // phí tạm tính theo bảng giá đến hiện tại
 }
 
 export interface BeIncident {
@@ -75,7 +73,7 @@ export interface BeIncident {
 }
 
 export interface BeReservation {
-  reservationId: number
+  reservationId: string
   // BE @JsonIgnore user & vehicleType, phơi phẳng qua getter:
   userId?: number | null
   vehicleTypeId?: number | null
@@ -133,6 +131,40 @@ export interface BeParkingInfo {
     extraHourPrice: number
     nightSurcharge?: number | null
   }>
+}
+
+/**
+ * Shape returned by GET /manager/availability — matches LotAvailability directly.
+ * (Different from the public /driver/parking-info which uses BeParkingInfo above.)
+ */
+export interface BeManagerAvailability {
+  byVehicleType: Array<{
+    vehicleTypeName: string
+    capacity: number
+    inside: number
+    outstanding: number
+    walkInHeadroom: number
+    byZone: Array<{ zone: string; available: number }>
+  }>
+}
+
+/** Floor DTO from /manager/floors */
+export interface BeFloor {
+  floorId: number
+  floorName: string
+  dedicatedVehicleTypeId?: number | null
+  totalCapacity?: number | null
+}
+
+/** CheckOut response now includes isOverstay from the backend */
+export interface BeCheckOutResponse {
+  sessionId: number
+  amount: number
+  paymentStatus: string
+  paymentMethod: string
+  plateMismatch: boolean
+  slotFreed?: string | null
+  isOverstay?: boolean | null
 }
 
 export interface BeRevenueReport {
@@ -197,7 +229,10 @@ export function mapActiveSession(s: BeActiveSession): ParkingSession {
     actualSlotCode: s.actualSlotCode ?? undefined,
     entryTime: s.entryTime,
     isPaid: false,
+    totalFee: s.estimatedFee ?? undefined, // phí tạm tính từ BE (null khi chưa có bảng giá)
     status: s.status as SessionStatus,
+    isForceCheckIn: s.isForceCheckIn ?? undefined,
+    isOverstay: s.isOverstay ?? undefined,
   }
 }
 
@@ -246,7 +281,13 @@ export function mapPricingPolicy(p: BePricingPolicy): PricingPolicy {
     policyId: String(p.policyId),
     vehicleTypeId: p.vehicleType ? String(p.vehicleType.vehicleTypeId) : '',
     vehicleTypeName: p.vehicleType?.typeName ?? '',
-    hourlyRate: Number(p.basePrice ?? 0), // v3.1 giá phẳng → basePrice là giá/giờ.
+    // Giữ ĐẦY ĐỦ chính sách giá để màn sửa giá hiển thị + gửi lại nguyên vẹn
+    // (BE PUT thay thế toàn bộ → thiếu field nào sẽ bị xoá).
+    basePrice: Number(p.basePrice ?? 0),
+    baseHours: Number(p.baseHours ?? 1),
+    extraHourPrice: Number(p.extraHourPrice ?? 0),
+    nightSurcharge: Number(p.nightSurcharge ?? 0),
+    lostTicketFee: Number(p.lostTicketFee ?? 0),
     status: (p.status as 'Active' | 'Expired') ?? 'Active',
     effectiveDate: p.effectiveDate,
   }
@@ -261,7 +302,7 @@ export function mapFeeConfig(c: BeFeeConfig): FeeConfig {
   }
 }
 
-export function mapAvailability(info: BeParkingInfo): LotAvailability {
+function mapAvailability(info: BeParkingInfo): LotAvailability {
   return {
     byVehicleType: (info.availabilityByVehicleType ?? []).map((a) => ({
       vehicleTypeName: a.vehicleTypeName,
@@ -272,4 +313,13 @@ export function mapAvailability(info: BeParkingInfo): LotAvailability {
       byZone: [],
     })),
   }
+}
+
+/**
+ * Passthrough: GET /manager/availability already returns the canonical
+ * LotAvailability shape (capacity, inside, outstanding, walkInHeadroom, byZone).
+ * No mapping needed — cast directly.
+ */
+export function mapManagerAvailability(raw: BeManagerAvailability): LotAvailability {
+  return raw as LotAvailability
 }

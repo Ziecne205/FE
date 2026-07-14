@@ -12,6 +12,8 @@ interface SlotDetailPanelProps {
   readonly isLoading: boolean
   readonly onToggleMaintenance: (slot: Slot) => void
   readonly onClose: () => void
+  /** Chỉ Manager/Admin mới có nút bảo trì (Staff chỉ xem chi tiết). */
+  readonly canManage?: boolean
 }
 
 export function SlotDetailPanel({
@@ -20,6 +22,7 @@ export function SlotDetailPanel({
   isLoading,
   onToggleMaintenance,
   onClose,
+  canManage = true,
 }: SlotDetailPanelProps) {
   const rows = [
     { label: 'Khu vực', value: slot.zone ?? '—' },
@@ -56,17 +59,21 @@ export function SlotDetailPanel({
         ))}
       </dl>
 
-      <Button
-        variant="outline"
-        className="w-full gap-2"
-        disabled={isLoading || slot.status === 'Occupied'}
-        onClick={() => onToggleMaintenance(slot)}
-      >
-        <Wrench className="h-4 w-4" />
-        {slot.status === 'Maintenance' ? 'Kết thúc bảo trì' : 'Đánh dấu bảo trì'}
-      </Button>
-      {slot.status === 'Occupied' && (
-        <p className="mt-2 text-center text-xs text-gray-500">Không thể bảo trì ô đang có xe</p>
+      {canManage && (
+        <>
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            disabled={isLoading || slot.status === 'Occupied'}
+            onClick={() => onToggleMaintenance(slot)}
+          >
+            <Wrench className="h-4 w-4" />
+            {slot.status === 'Maintenance' ? 'Kết thúc bảo trì' : 'Đánh dấu bảo trì'}
+          </Button>
+          {slot.status === 'Occupied' && (
+            <p className="mt-2 text-center text-xs text-gray-500">Không thể bảo trì ô đang có xe</p>
+          )}
+        </>
       )}
     </div>
   )

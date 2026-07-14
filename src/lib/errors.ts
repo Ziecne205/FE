@@ -67,7 +67,7 @@ export interface SpringBootValidationError {
 /**
  * Error code mappings for common scenarios
  */
-export const ErrorCodes = {
+const ErrorCodes = {
   // Authentication & Authorization
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
@@ -364,7 +364,7 @@ function getVietnameseMessage(error: SpringBootError, code: ErrorCode): string {
  *   toast.error(appError.message)
  * }
  */
-export async function handleApiError(response: Response): Promise<AppError> {
+async function handleApiError(response: Response): Promise<AppError> {
   try {
     const errorData = await response.json()
     return normalizeSpringBootError(errorData)

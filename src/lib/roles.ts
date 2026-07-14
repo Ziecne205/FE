@@ -6,7 +6,7 @@ import type { UserRole } from '@/types/model'
  * - `canAccess`: per-route-prefix guard. Admin is a superset (allowed everywhere).
  */
 export const roleHome: Record<UserRole, string> = {
-  Admin: '/dashboard', // TODO: '/admin/overview' once the admin tranche lands
+  Admin: '/admin/overview',
   Manager: '/dashboard',
   Staff: '/dashboard',
   // App này chỉ cho nội bộ — Driver dùng app parking-driver riêng; nếu lỡ đăng nhập ở đây thì về login.
@@ -22,7 +22,12 @@ const ROUTE_ROLES: ReadonlyArray<{ prefix: string; roles: UserRole[] }> = [
   { prefix: '/pricing', roles: ['Manager'] },
   { prefix: '/reports', roles: ['Manager'] },
   { prefix: '/bookings', roles: ['Manager'] },
+  // Tạo tài khoản nội bộ (Manager tạo Manager/Staff). Admin là superset -> tự động vào được.
+  { prefix: '/accounts', roles: ['Manager'] },
   // Staff-only operations
+  { prefix: '/check-in', roles: ['Staff'] },
+  { prefix: '/check-out', roles: ['Staff'] },
+  // Legacy routes (nay gộp vào /check-in + /check-out) — vẫn cho truy cập trực tiếp.
   { prefix: '/simulator', roles: ['Staff'] },
   { prefix: '/exit-payment', roles: ['Staff'] },
   // Shared console (Manager + Staff)

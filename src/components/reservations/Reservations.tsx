@@ -34,12 +34,19 @@ export function Reservations() {
 
   const filtered = useMemo(
     () =>
-      reservations.filter((r) => {
-        const matchStatus = statusFilter === 'all' || r.status === statusFilter
-        const matchSearch =
-          !search || r.licensePlate.toLowerCase().includes(search.toLowerCase())
-        return matchStatus && matchSearch
-      }),
+      reservations
+        .filter((r) => {
+          const matchStatus = statusFilter === 'all' || r.status === statusFilter
+          const matchSearch =
+            !search || r.licensePlate.toLowerCase().includes(search.toLowerCase())
+          return matchStatus && matchSearch
+        })
+        // Sắp xếp theo NGÀY THAO TÁC mới nhất trước (ngày đặt/tạo booking, không phải
+        // khung giờ dự kiến) — booking tạo hôm nay lên đầu dù khung giờ ở tương lai xa.
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+        ),
     [reservations, statusFilter, search],
   )
 

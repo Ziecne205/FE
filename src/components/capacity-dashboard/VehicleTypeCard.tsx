@@ -63,10 +63,9 @@ interface VehicleTypeCardProps {
   readonly data: VehicleTypeAvailability;
 }
 
+// Hệ thống chỉ quản lý bãi đỗ ô tô; giữ map để phòng khi thêm loại ô tô mới.
 const VEHICLE_ICON: Record<string, string> = {
   'Ô tô': 'directions_car',
-  'Xe máy': 'two_wheeler',
-  'Xe tải': 'local_shipping',
 };
 
 export function VehicleTypeCard({ data }: VehicleTypeCardProps) {

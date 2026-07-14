@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { api, type AppError } from '@/lib/api'
 import { REFRESH_INTERVAL } from '@/lib/constants'
 import type { ParkingSession, VehicleType } from '@/types/model'
 import { mapActiveSession, type BeActiveSession } from '@/lib/beApi'
@@ -55,8 +55,12 @@ export function useOpenSessions(): { data: ParkingSession[]; isLoading: boolean 
 }
 
 /** Tìm phiên đang mở theo biển số (hỗ trợ checkout) — GET /staff/sessions/search?licensePlate=. */
-export function useFindCar(plate: string): { data: ParkingSession | null } {
-  const query = useQuery<ParkingSession | null>({
+export function useFindCar(plate: string): {
+  data: ParkingSession | null
+  isError: boolean
+  error: AppError | null
+} {
+  const query = useQuery<ParkingSession | null, AppError>({
     queryKey: ['sessions', 'find', plate],
     queryFn: async () => {
       try {
@@ -64,12 +68,39 @@ export function useFindCar(plate: string): { data: ParkingSession | null } {
           `/staff/sessions/search?licensePlate=${encodeURIComponent(plate)}`,
         )
         return mapActiveSession(dto)
-      } catch {
-        return null
+      } catch (err) {
+        // 404 = không có phiên đang mở cho biển số này → coi là "không tìm thấy" (data = null).
+        // Các lỗi khác (mạng / 500) phải nổi lên, không được nuốt thành "không tìm thấy".
+        if ((err as AppError)?.status === 404) return null
+        throw err
       }
     },
     enabled: plate.length >= 4,
     retry: false,
   })
-  return { data: query.data ?? null }
+  return { data: query.data ?? null, isError: query.isError, error: query.error ?? null }
+}
+
+export interface StaffForceCheckInInput {
+  sessionId: string | number
+  actualPlate: string
+  reason?: string
+}
+
+/**
+ * Audited staff force check-in — POST /staff/sessions/{id}/force-check-in.
+ * Overwrites the plate on the session (and reservation if any), sets isForceCheckIn=true,
+ * writes an AuditLog entry (STAFF_FORCE_CHECK_IN). This is distinct from the
+ * hardware simulator's /gate/force-checkin which has no audit trail.
+ */
+export function useStaffForceCheckIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sessionId, actualPlate, reason }: StaffForceCheckInInput) =>
+      api.post(`/staff/sessions/${sessionId}/force-check-in`, { actualPlate, reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
 }

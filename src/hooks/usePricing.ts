@@ -21,28 +21,40 @@ export function usePricingPolicies() {
   })
 }
 
+/** Toàn bộ chính sách giá cần gửi khi cập nhật (BE PUT thay thế nguyên bản ghi). */
+export interface UpdatePricingInput {
+  policyId: string
+  vehicleTypeId: string
+  basePrice: number
+  baseHours: number
+  extraHourPrice: number
+  nightSurcharge: number
+  lostTicketFee: number
+  /** Giữ nguyên effectiveDate hiện tại (giá mới dùng cho các lần check-out kể từ giờ; không hồi tố). */
+  effectiveDate: string
+}
+
 export function useUpdatePricing() {
   const queryClient = useQueryClient()
-  return useMutation<PricingPolicy, AppError, { policyId: string; hourlyRate: number }>({
-    mutationFn: async ({ policyId, hourlyRate }) => {
-      // BE PUT cần đủ PricingPolicyRequest; lấy vehicleType/effectiveDate từ cache,
-      // rồi đặt basePrice = extraHourPrice = giá/giờ (v3.1 giá phẳng, baseHours = 1).
-      const cached = queryClient
-        .getQueryData<PricingPolicy[]>(['pricing-policies'])
-        ?.find((p) => p.policyId === policyId)
+  return useMutation<PricingPolicy, AppError, UpdatePricingInput>({
+    mutationFn: async (input) => {
+      // Gửi ĐẦY ĐỦ PricingPolicyRequest — tránh việc BE PUT (thay thế toàn bộ) xoá mất
+      // nightSurcharge / lostTicketFee khi chỉ gửi giá cơ bản.
       const body = {
-        vehicleTypeId: cached ? Number(cached.vehicleTypeId) : undefined,
-        basePrice: hourlyRate,
-        baseHours: 1,
-        extraHourPrice: hourlyRate,
-        effectiveDate: cached?.effectiveDate ?? new Date().toISOString(),
+        vehicleTypeId: Number(input.vehicleTypeId),
+        basePrice: input.basePrice,
+        baseHours: input.baseHours,
+        extraHourPrice: input.extraHourPrice,
+        nightSurcharge: input.nightSurcharge,
+        lostTicketFee: input.lostTicketFee,
+        effectiveDate: input.effectiveDate,
       }
-      const saved = await api.put<BePricingPolicy>(`/manager/pricing-policies/${policyId}`, body)
+      const saved = await api.put<BePricingPolicy>(`/manager/pricing-policies/${input.policyId}`, body)
       return mapPricingPolicy(saved)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pricing-policies'] })
-      toast.success('Đã cập nhật giá')
+      toast.success('Đã cập nhật bảng giá')
     },
     onError: (error) => toast.error(error.message),
   })

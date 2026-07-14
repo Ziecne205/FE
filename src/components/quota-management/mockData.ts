@@ -3,7 +3,7 @@ import type { BookingQuota } from '@/types/model'
 
 /**
  * Gom quota theo loại xe, lấy TÊN và SỨC CHỨA thật (truyền từ vehicle-types +
- * availability API). Trước đây hardcode 'vt-car'/'vt-moto' nên với dữ liệu BE
+ * availability API). Trước đây hardcode id loại xe cố định nên với dữ liệu BE
  * (vehicleTypeId dạng số) thì tên & capacity đều sai.
  */
 export function buildGroups(

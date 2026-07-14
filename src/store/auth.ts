@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { User, UserRole } from '@/types/model'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import { setToken } from '@/lib/authToken'
+import { setAuthToken, setUnauthorizedHandler } from '@/lib/session'
 
 /** BE `LoginResponse` (AuthController) — the only fields login/register return. */
 interface LoginResponse {
@@ -32,16 +32,15 @@ function errMessage(error: unknown, fallback: string): string {
 
 interface AuthState {
   user: User | null
+  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  /** False until the persisted session finishes rehydrating from localStorage.
+   *  Guards route redirects so a full page reload doesn't bounce to /login before
+   *  the stored token is restored into the API layer. */
+  _hasHydrated: boolean
+  _setHasHydrated: (v: boolean) => void
   login: (username: string, password: string) => Promise<void>
-  register: (fields: {
-    fullName: string
-    phone: string
-    email: string
-    password: string
-    licensePlate?: string
-  }) => Promise<void>
   logout: () => void
   setUser: (user: User) => void
 }
@@ -50,14 +49,18 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
+      _setHasHydrated: (v: boolean) => set({ _hasHydrated: v }),
 
       login: async (username: string, password: string) => {
         set({ isLoading: true })
         try {
           const res = await api.post<LoginResponse>('/auth/login', { username, password })
-          setToken(res.token)
+          // Store the JWT before any follow-up call so apiFetch can attach it.
+          setAuthToken(res.token)
           const role = mapRole(res.roleName)
           let loggedUser: User = {
             id: res.username,
@@ -88,49 +91,21 @@ export const useAuthStore = create<AuthState>()(
             }
           }
 
-          set({ user: loggedUser, isAuthenticated: true, isLoading: false })
+          set({ user: loggedUser, token: res.token, isAuthenticated: true, isLoading: false })
           toast.success('Đăng nhập thành công')
         } catch (error) {
+          setAuthToken(null)
           set({ isLoading: false })
           toast.error(errMessage(error, 'Đăng nhập thất bại'))
           throw error
         }
       },
 
-      register: async (fields) => {
-        set({ isLoading: true })
-        try {
-          // BE RegisterRequest: { username, password, fullName, phoneNumber, email, roleName }.
-          // Tạm dùng email làm username (form Driver chưa có field username riêng).
-          const res = await api.post<LoginResponse>('/auth/register', {
-            username: fields.email,
-            password: fields.password,
-            fullName: fields.fullName,
-            phoneNumber: fields.phone,
-            email: fields.email,
-            roleName: 'Driver',
-          })
-          setToken(res.token)
-          const registeredUser: User = {
-            id: res.username,
-            email: fields.email,
-            phone: fields.phone,
-            fullName: fields.fullName,
-            role: mapRole(res.roleName),
-            status: 'Active',
-          }
-          set({ user: registeredUser, isAuthenticated: true, isLoading: false })
-          toast.success('Đăng ký thành công')
-        } catch (error) {
-          set({ isLoading: false })
-          toast.error(errMessage(error, 'Đăng ký thất bại'))
-          throw error
-        }
-      },
-
       logout: () => {
-        setToken(null)
-        set({ user: null, isAuthenticated: false })
+        // Best-effort server-side invalidation; clear local state regardless.
+        void api.post('/auth/logout').catch(() => {})
+        setAuthToken(null)
+        set({ user: null, token: null, isAuthenticated: false })
         toast.success('Đăng xuất thành công')
       },
 
@@ -140,6 +115,43 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Bump when the persisted shape changes so stale entries self-invalidate.
+      // v0 persisted a standalone `isAuthenticated:true` with no token behind it —
+      // dropping to only {user, token} kills those phantom sessions on next load.
+      version: 1,
+      partialize: (state) => ({ user: state.user, token: state.token }),
+      // v0 persisted a standalone `isAuthenticated:true` with no token. Drop that
+      // legacy state to a clean logged-out shape instead of warning + discarding.
+      migrate: (persisted, version) => {
+        if (version === 0 || !persisted) {
+          return { user: null, token: null }
+        }
+        return persisted as { user: User | null; token: string | null }
+      },
+      // Rehydrate the session bridge and derive auth from an actual token.
+      // _setHasHydrated fires a reactive update (so guards re-render) AFTER the token
+      // has been pushed into the API layer — never redirect before this runs.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        setAuthToken(state.token ?? null)
+        state.isAuthenticated = !!state.token
+        state._setHasHydrated(true)
+      },
     }
   )
 )
+
+// Any 401 from the API layer → drop the session and bounce to login. Guarded so it
+// never fires during SSR or loops while already on the login page.
+setUnauthorizedHandler(() => {
+  const alreadyLoggedOut = !useAuthStore.getState().isAuthenticated
+  setAuthToken(null)
+  useAuthStore.setState({ user: null, token: null, isAuthenticated: false })
+  if (
+    typeof window !== 'undefined' &&
+    !window.location.pathname.startsWith('/login')
+  ) {
+    if (!alreadyLoggedOut) toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại')
+    window.location.href = '/login'
+  }
+})

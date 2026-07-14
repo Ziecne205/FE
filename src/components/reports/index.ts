@@ -1,8 +1,2 @@
 export { Reports } from './Reports'
-export { ReportsHeader } from './ReportsHeader'
-export { ReportsKpiCards } from './ReportsKpiCards'
-export { RevenueChart } from './RevenueChart'
-export { OccupancyCurve } from './OccupancyCurve'
-export { PeakHoursBars } from './PeakHoursBars'
-export { ReportsTable } from './ReportsTable'
 export type { RevenuePoint } from './types'
