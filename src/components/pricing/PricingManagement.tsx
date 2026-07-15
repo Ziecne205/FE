@@ -161,7 +161,7 @@ function FeeConfigForm({ fee }: FeeConfigFormProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="noShowGraceMinutes">Ân hạn no-show (phút)</Label>
+        <Label htmlFor="noShowGraceMinutes">Gia hạn khi khách không đến (phút)</Label>
         <Input
           id="noShowGraceMinutes"
           type="number"
@@ -171,7 +171,7 @@ function FeeConfigForm({ fee }: FeeConfigFormProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="blacklistThreshold">Ngưỡng blacklist (lần no-show)</Label>
+        <Label htmlFor="blacklistThreshold">Ngưỡng blacklist (số lần không đến)</Label>
         <Input
           id="blacklistThreshold"
           type="number"

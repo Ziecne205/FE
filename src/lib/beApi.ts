@@ -29,6 +29,8 @@ export interface BeGate {
   gateId: number
   gateName: string
   gateType: string // "Entry" | "Exit"
+  floorId?: number | null
+  floorName?: string | null
 }
 
 export interface BeSlot {

@@ -4,6 +4,7 @@ import { Menu, ChevronRight } from 'lucide-react';
 import { USER_ROLE_LABELS } from '@/lib/constants';
 import { useNow } from '@/hooks/useNow';
 import type { User } from '@/types/model';
+import { GateSwitcher } from './GateSwitcher';
 
 interface TopBarProps {
   user: User;
@@ -46,6 +47,8 @@ export function TopBar({ user, breadcrumbs, lastUpdate, onMenuClick }: TopBarPro
 
       {/* Right: Status & User */}
       <div className="flex items-center gap-4">
+        <GateSwitcher />
+
         {/* Live Update Indicator */}
         {timeSinceUpdate !== null && (
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full border border-gray-200">
