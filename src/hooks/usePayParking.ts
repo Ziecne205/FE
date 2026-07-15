@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PaymentMethod } from '@/types/model'
 import { api } from '@/lib/api'
-import { resolveGateId } from '@/hooks/useGates'
+import { resolveFloorGateId } from '@/hooks/useGates'
 import type { BeCheckOutResponse } from '@/lib/beApi'
 
 export interface PayParkingInput {
