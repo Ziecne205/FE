@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { cn, getStatusColor, formatDateTime, formatCurrency } from '@/lib/utils'
+import { cn, getStatusColor, formatDate, formatDateTime, formatCurrency } from '@/lib/utils'
 import { RESERVATION_STATUS_LABELS } from '@/lib/constants'
 import type { Reservation } from '@/types/model'
 
@@ -31,7 +31,7 @@ export function ReservationTable({ reservations, onCancel }: ReservationTablePro
               <TableHead>Mã</TableHead>
               <TableHead>Biển số</TableHead>
               <TableHead>Loại xe</TableHead>
-              <TableHead>Khung giờ</TableHead>
+              <TableHead>Ngày đặt / Khung giờ</TableHead>
               <TableHead className="text-right">Cọc</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead className="text-center">Thao tác</TableHead>
@@ -52,8 +52,12 @@ export function ReservationTable({ reservations, onCancel }: ReservationTablePro
                   </TableCell>
                   <TableCell className="font-bold">{r.licensePlate}</TableCell>
                   <TableCell>{r.vehicleTypeName}</TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {formatDateTime(r.expectedEntryTime)} → {formatDateTime(r.expectedExitTime)}
+                  <TableCell className="text-sm">
+                    {/* Ngày thao tác (ngày đặt) — cơ sở sắp xếp mới nhất trước, hiển thị ngày/tháng */}
+                    <div className="font-medium text-gray-900">Đặt: {formatDate(r.createdAt)}</div>
+                    <div className="text-xs text-gray-500">
+                      {formatDateTime(r.expectedEntryTime)} → {formatDateTime(r.expectedExitTime)}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(r.depositAmount)}</TableCell>
                   <TableCell>

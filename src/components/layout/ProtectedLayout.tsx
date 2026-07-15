@@ -22,32 +22,41 @@ const routeTitles: Record<string, string> = {
   '/quota': 'Hạn mức đặt chỗ',
   '/pricing': 'Quản lý giá',
   '/reports': 'Báo cáo',
+  '/accounts': 'Tạo tài khoản',
+  '/check-in': 'Check-in cổng vào',
+  '/check-out': 'Check-out cổng ra',
   '/exit-payment': 'Thanh toán cổng ra',
   '/simulator': 'Mô phỏng Cổng & Camera',
+  '/admin/overview': 'Trung tâm Giám sát',
   '/admin/users': 'Quản lý tài khoản',
   '/admin/rbac': 'Phân quyền',
   '/admin/system-config': 'Cấu hình hệ thống',
   '/admin/audit-logs': 'Nhật ký hệ thống',
+  '/help': 'Trợ giúp',
 }
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore()
 
   const allowed = !!user && canAccess(user.role, pathname)
 
   useEffect(() => {
+    // Wait for the persisted session to rehydrate before making any routing decision —
+    // otherwise a full page reload (e.g. an <a href> or F5) redirects to /login before
+    // the stored token is restored, even though the user is validly logged in.
+    if (!_hasHydrated) return
     if (!isAuthenticated) {
       router.replace('/login')
     } else if (user && !canAccess(user.role, pathname)) {
       // Authenticated but wrong role for this route → send to the role's home.
       router.replace(roleHome[user.role])
     }
-  }, [isAuthenticated, user, pathname, router])
+  }, [_hasHydrated, isAuthenticated, user, pathname, router])
 
-  // Show loading while checking auth, if not authenticated, or while redirecting a disallowed role.
-  if (!isAuthenticated || !user || !allowed) {
+  // Show loading until hydration completes, if not authenticated, or while redirecting a disallowed role.
+  if (!_hasHydrated || !isAuthenticated || !user || !allowed) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">

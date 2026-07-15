@@ -2,6 +2,7 @@
 
 import { Menu, ChevronRight } from 'lucide-react';
 import { USER_ROLE_LABELS } from '@/lib/constants';
+import { useNow } from '@/hooks/useNow';
 import type { User } from '@/types/model';
 import { GateSwitcher } from './GateSwitcher';
 
@@ -13,9 +14,9 @@ interface TopBarProps {
 }
 
 export function TopBar({ user, breadcrumbs, lastUpdate, onMenuClick }: TopBarProps) {
-  const timeSinceUpdate = lastUpdate
-    ? Math.floor((Date.now() - lastUpdate.getTime()) / 1000)
-    : null;
+  const now = useNow();
+  const timeSinceUpdate =
+    lastUpdate && now !== null ? Math.floor((now - lastUpdate.getTime()) / 1000) : null;
 
   return (
     <header className="sticky top-0 z-50 flex justify-between items-center w-full px-6 py-3 bg-white shadow-sm border-b border-gray-200">

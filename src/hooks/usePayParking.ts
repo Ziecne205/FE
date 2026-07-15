@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PaymentMethod } from '@/types/model'
 import { api } from '@/lib/api'
-import { resolveFloorGateId } from '@/hooks/useGates'
+import { resolveGateId } from '@/hooks/useGates'
+import type { BeCheckOutResponse } from '@/lib/beApi'
 
 export interface PayParkingInput {
   licensePlate: string
@@ -15,16 +16,7 @@ export interface PayParkingResult {
   status: string
   barrierOpen: boolean
   amount: number
-}
-
-/** BE CheckOutResponse — các field dùng ở màn thanh toán cổng ra. */
-interface BeCheckOutResponse {
-  sessionId: number
-  amount: number
-  paymentStatus: string
-  paymentMethod: string
-  plateMismatch: boolean
-  slotFreed?: string | null
+  isOverstay: boolean // extra-hour surcharge was applied due to overstay
 }
 
 /**
@@ -50,6 +42,7 @@ export function usePayParking() {
         status: res.paymentStatus,
         barrierOpen: res.paymentStatus === 'Success',
         amount: Number(res.amount ?? 0),
+        isOverstay: res.isOverstay ?? false,
       }
     },
     onSuccess: () => {

@@ -35,7 +35,9 @@ export interface SystemConfigItem {
 
 export interface AuditLogItem {
   logId: number
-  user?: { userId: number; username?: string; fullName?: string } | null
+  // BE @JsonIgnore quan hệ user, phơi phẳng tên người thực hiện qua getter.
+  userFullName?: string | null
+  userName?: string | null
   action: string
   entityName: string
   entityId?: string | null
@@ -48,6 +50,31 @@ export function useUsers() {
   return useQuery({
     queryKey: ['admin', 'users'],
     queryFn: () => api.get<AdminUser[]>('/admin/users'),
+  })
+}
+
+export interface CreateUserInput {
+  username: string
+  password: string
+  fullName: string
+  phoneNumber?: string
+  email?: string
+  roleName: string // 'Manager' | 'Staff' (BE chặn 'Admin')
+}
+
+/**
+ * Tạo tài khoản nội bộ — POST /api/admin/users. BE cho phép cả Admin và Manager gọi
+ * (Manager tạo được Manager/Staff, không tạo được Admin). Chỉ dùng cho phần console.
+ */
+export function useCreateUser() {
+  const qc = useQueryClient()
+  return useMutation<AdminUser, AppError, CreateUserInput>({
+    mutationFn: (body) => api.post<AdminUser>('/admin/users', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+      toast.success('Đã tạo tài khoản')
+    },
+    onError: (e) => toast.error(e.message),
   })
 }
 
@@ -65,9 +92,9 @@ export function useUpdateUserStatus() {
 
 export function useResetUserPassword() {
   return useMutation<void, AppError, { id: number; newPassword: string }>({
-    // BE nhận body chuỗi thô (raw string).
+    // BE nhận DTO { newPassword } — không gửi chuỗi thô (JSON string sẽ bị lưu kèm dấu ngoặc kép).
     mutationFn: ({ id, newPassword }) =>
-      api.patch<void>(`/admin/users/${id}/reset-password`, newPassword),
+      api.patch<void>(`/admin/users/${id}/reset-password`, { newPassword }),
     onSuccess: () => toast.success('Đã đặt lại mật khẩu'),
     onError: (e) => toast.error(e.message),
   })
@@ -160,23 +187,45 @@ export interface AuditFilter {
   to?: string
 }
 
-export function useAuditLogs(filter: AuditFilter = {}) {
+/** BE PageResponse<T> — simple pagination envelope. */
+export interface AuditPage {
+  content: AuditLogItem[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export function useAuditLogs(filter: AuditFilter = {}, page = 0, size = 20) {
   return useQuery({
-    queryKey: ['admin', 'audit', filter],
-    queryFn: () => {
+    queryKey: ['admin', 'audit', filter, page, size],
+    // Chỉ chế độ "Tất cả" phân trang phía server; các chế độ lọc trả mảng → gói thành 1 trang.
+    queryFn: async (): Promise<AuditPage> => {
+      const wrap = (arr: AuditLogItem[]): AuditPage => ({
+        content: arr,
+        page: 0,
+        size: arr.length,
+        totalElements: arr.length,
+        totalPages: 1,
+      })
       if (filter.action)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-action?action=${encodeURIComponent(filter.action)}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(
+            `/admin/audit-logs/by-action?action=${encodeURIComponent(filter.action)}`,
+          ),
         )
       if (filter.entityName)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-entity?entityName=${encodeURIComponent(filter.entityName)}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(
+            `/admin/audit-logs/by-entity?entityName=${encodeURIComponent(filter.entityName)}`,
+          ),
         )
       if (filter.from && filter.to)
-        return api.get<AuditLogItem[]>(
-          `/admin/audit-logs/by-date?from=${filter.from}&to=${filter.to}`,
+        return wrap(
+          await api.get<AuditLogItem[]>(`/admin/audit-logs/by-date?from=${filter.from}&to=${filter.to}`),
         )
-      return api.get<AuditLogItem[]>('/admin/audit-logs')
+      return api.get<AuditPage>(`/admin/audit-logs?page=${page}&size=${size}`)
     },
+    placeholderData: (prev) => prev, // keep previous page visible while the next loads
   })
 }

@@ -1,9 +1,11 @@
 'use client'
 
-import { Banknote, QrCode, CheckCircle2, Loader2 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { Banknote, QrCode, CheckCircle2, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn, formatCurrency } from '@/lib/utils'
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
+import { useSessionPayosLink } from '@/hooks/useSessionPayosLink'
 import type { PaymentMethod } from '@/types/model'
 import type { PaymentQrPanelProps } from './types'
 
@@ -11,42 +13,6 @@ const METHODS: { value: PaymentMethod; icon: React.ReactNode; label: string }[] 
   { value: 'Cash', icon: <Banknote className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS.Cash },
   { value: 'QR', icon: <QrCode className="h-4 w-4" />, label: PAYMENT_METHOD_LABELS.QR },
 ]
-
-function QrPlaceholder({ sessionId }: { sessionId: string }) {
-  return (
-    <svg
-      viewBox="0 0 200 200"
-      className="h-48 w-48"
-      aria-label={`QR thanh toán phiên ${sessionId}`}
-      role="img"
-    >
-      <rect width="200" height="200" fill="#f9fafb" rx="8" />
-      {/* outer frame */}
-      <rect x="10" y="10" width="60" height="60" fill="none" stroke="#111827" strokeWidth="6" rx="4" />
-      <rect x="22" y="22" width="36" height="36" fill="#111827" rx="2" />
-      <rect x="130" y="10" width="60" height="60" fill="none" stroke="#111827" strokeWidth="6" rx="4" />
-      <rect x="142" y="22" width="36" height="36" fill="#111827" rx="2" />
-      <rect x="10" y="130" width="60" height="60" fill="none" stroke="#111827" strokeWidth="6" rx="4" />
-      <rect x="22" y="142" width="36" height="36" fill="#111827" rx="2" />
-      {/* data dots */}
-      {[80,90,100,110,120].map((x) =>
-        [80,90,100,110,120].map((y) => (
-          <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" fill="#111827" rx="1" />
-        ))
-      )}
-      {[140,155,170].map((x) =>
-        [130,145,160,175].map((y) => (
-          <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" fill="#111827" rx="1" />
-        ))
-      )}
-      {[80,95,110].map((x) =>
-        [140,155,170].map((y) => (
-          <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" fill="#111827" rx="1" />
-        ))
-      )}
-    </svg>
-  )
-}
 
 export function PaymentQrPanel({
   sessionId,
@@ -56,6 +22,10 @@ export function PaymentQrPanel({
   onConfirm,
   isPending,
 }: PaymentQrPanelProps) {
+  // QR PayOS THẬT (VietQR) tạo động theo phí đỗ hiện tại của phiên — thay cho QR placeholder.
+  const payos = useSessionPayosLink()
+  const link = payos.data
+
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
@@ -82,20 +52,58 @@ export function PaymentQrPanel({
         </div>
       </div>
 
-      {selectedMethod !== 'Cash' && (
+      {selectedMethod === 'QR' && (
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            {selectedMethod === 'QR' ? 'Quét mã để thanh toán' : 'QR dán kính'}
+            Quét mã PayOS để thanh toán
           </h3>
-          <div className="flex flex-col items-center gap-3">
-            <QrPlaceholder sessionId={sessionId} />
-            <p className="text-center text-xs text-gray-500">
-              Hướng camera điện thoại về phía màn hình
-              <br />
-              Hỗ trợ MoMo, ZaloPay, VNPAY và các app ngân hàng
-            </p>
-            <p className="text-xs font-medium text-gray-400">Đang chờ khách hàng quét mã...</p>
-          </div>
+
+          {!link ? (
+            // Chưa tạo mã → nút tạo QR PayOS động (gọi BE POST /staff/sessions/{id}/payos-link)
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <QrCode className="h-10 w-10 text-gray-300" />
+              <p className="text-sm text-gray-500">
+                Tạo mã QR PayOS động theo phí đỗ hiện tại để khách quét bằng app ngân hàng.
+              </p>
+              <Button onClick={() => payos.mutate({ sessionId })} disabled={payos.isPending} className="gap-1.5">
+                {payos.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <QrCode className="h-4 w-4" />
+                )}
+                Tạo mã QR PayOS
+              </Button>
+              {payos.isError && (
+                <p className="text-xs text-red-600">
+                  {payos.error?.message ?? 'Không tạo được mã QR — kiểm tra cấu hình PayOS trên máy chủ.'}
+                </p>
+              )}
+            </div>
+          ) : (
+            // Đã có mã → render QR PayOS THẬT + số tiền + mã nội dung thanh toán độc quyền của phiên
+            <div className="flex flex-col items-center gap-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
+                <QRCodeSVG value={link.qrCode} size={192} level="M" marginSize={2} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(link.amount)}</p>
+              <div className="w-full rounded-md bg-gray-50 px-3 py-2 text-center">
+                <p className="text-xs uppercase tracking-wide text-gray-400">Mã nội dung thanh toán</p>
+                <p className="select-all font-mono text-sm font-semibold text-gray-800">{link.orderCode}</p>
+              </div>
+              <p className="text-center text-xs text-gray-500">
+                Khách quét bằng app ngân hàng / MoMo / ZaloPay / VNPAY
+              </p>
+              <button
+                type="button"
+                onClick={() => payos.mutate({ sessionId })}
+                disabled={payos.isPending}
+                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline disabled:opacity-60"
+              >
+                <RefreshCw className={cn('h-3 w-3', payos.isPending && 'animate-spin')} />
+                Tạo lại mã
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -103,9 +111,7 @@ export function PaymentQrPanel({
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col items-center gap-2 py-4 text-center">
             <Banknote className="h-10 w-10 text-gray-400" />
-            <p className="text-sm text-gray-600">
-              Thu tiền mặt từ khách
-            </p>
+            <p className="text-sm text-gray-600">Thu tiền mặt từ khách</p>
             <p className="text-xl font-bold text-gray-900">{formatCurrency(totalFee)}</p>
           </div>
         </div>

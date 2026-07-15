@@ -9,6 +9,8 @@ interface SlotMapHeaderProps {
   readonly onFloorChange: (floor: number) => void
   readonly maintenanceMode: boolean
   readonly onToggleMaintenance: (on: boolean) => void
+  /** Chỉ Manager/Admin mới thấy công tắc bảo trì (Staff chỉ xem). */
+  readonly canManage?: boolean
 }
 
 const LEGEND = [
@@ -24,6 +26,7 @@ export function SlotMapHeader({
   onFloorChange,
   maintenanceMode,
   onToggleMaintenance,
+  canManage = true,
 }: SlotMapHeaderProps) {
   return (
     <div className="space-y-4 border-b border-gray-200 pb-4">
@@ -42,20 +45,22 @@ export function SlotMapHeader({
               </div>
             ))}
           </div>
-          {/* Maintenance mode toggle */}
-          <label className="flex cursor-pointer items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Chế độ bảo trì</span>
-            <span className="relative inline-flex">
-              <input
-                type="checkbox"
-                className="peer sr-only"
-                checked={maintenanceMode}
-                onChange={(e) => onToggleMaintenance(e.target.checked)}
-              />
-              <span className="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-blue-600" />
-              <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
-            </span>
-          </label>
+          {/* Maintenance mode toggle — chỉ Manager/Admin */}
+          {canManage && (
+            <label className="flex cursor-pointer items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Chế độ bảo trì</span>
+              <span className="relative inline-flex">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={maintenanceMode}
+                  onChange={(e) => onToggleMaintenance(e.target.checked)}
+                />
+                <span className="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-blue-600" />
+                <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+              </span>
+            </label>
+          )}
         </div>
       </div>
 

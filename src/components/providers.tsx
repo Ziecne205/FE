@@ -1,8 +1,8 @@
 'use client'
 
-import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
-import { ReactNode, useState, useEffect } from 'react'
-import { Toaster, toast } from 'sonner'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactNode, useState } from 'react'
+import { Toaster } from 'sonner'
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -10,44 +10,20 @@ export function Providers({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 10 * 1000, // 10 seconds - matches real-time update interval
-            refetchInterval: 10 * 1000, // Auto-refetch every 10 seconds
+            staleTime: 10 * 1000, // 10 seconds
             refetchOnWindowFocus: true,
-            refetchOnMount: true, // Always refetch on mount
             refetchOnReconnect: true,
             retry: 1,
             throwOnError: false,
+            // No global polling — real-time views opt in per-query via
+            // `refetchInterval: REFRESH_INTERVAL` so static data (RBAC, configs,
+            // audit logs) isn't re-fetched every 10s.
           },
         },
       })
   )
 
-  const [mockingEnabled, setMockingEnabled] = useState(false)
-
-  useEffect(() => {
-    async function enableMocking() {
-      // 1 công tắc: CHƯA set NEXT_PUBLIC_API_BASE = bật mock MSW; đã set = gọi server thật.
-      if (!process.env.NEXT_PUBLIC_API_BASE) {
-        const { initMocks } = await import('@/mocks')
-        await initMocks()
-      }
-      setMockingEnabled(true)
-    }
-
-    enableMocking()
-  }, [])
-
-  if (!mockingEnabled) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Đang khởi tạo...</p>
-        </div>
-      </div>
-    )
-  }
-
+  // App runs against the real backend (NEXT_PUBLIC_API_BASE) — no MSW mock bootstrap.
   return (
     <QueryClientProvider client={queryClient}>
       {children}

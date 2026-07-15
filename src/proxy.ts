@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 // Next.js 16 renamed the "middleware" convention to "proxy".
-// Runs on every matched request. Auth is currently client-side (Zustand);
-// in production you'd validate a JWT cookie here.
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const publicRoutes = ['/login']
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
-  void isPublicRoute // placeholder until server-side auth is added
+//
+// Auth is enforced CLIENT-SIDE by ProtectedLayout (redirects unauthenticated users
+// to /login and wrong-role users to their home). We intentionally do NOT guard here:
+// the JWT is stored in localStorage (zustand persist), which server middleware cannot
+// read, so any check at this layer would be blind. Moving the token into an httpOnly
+// cookie is the prerequisite for a real server-side guard — a deliberate follow-up,
+// out of scope for the demo. This pass-through is kept only so the matcher stays wired.
+export function proxy() {
   return NextResponse.next()
 }
 

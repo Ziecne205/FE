@@ -14,6 +14,8 @@ interface StatsCardProps {
     color: 'green' | 'red' | 'blue';
   };
   badge?: string;
+  /** Show a skeleton in place of the value while the source query is loading. */
+  loading?: boolean;
 }
 
 const iconColorClasses = {
@@ -30,7 +32,7 @@ const trendColorClasses = {
   blue: 'text-blue-600',
 };
 
-export function StatsCard({ title, value, icon: Icon, iconColor, trend, badge }: StatsCardProps) {
+export function StatsCard({ title, value, icon: Icon, iconColor, trend, badge, loading }: StatsCardProps) {
   return (
     <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
       <div className="flex justify-between items-start">
@@ -58,7 +60,11 @@ export function StatsCard({ title, value, icon: Icon, iconColor, trend, badge }:
 
       <div className="mt-4">
         <p className="text-sm text-gray-600 font-medium">{title}</p>
-        <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+        {loading ? (
+          <div className="mt-2 h-8 w-16 animate-pulse rounded bg-gray-200" />
+        ) : (
+          <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+        )}
       </div>
     </div>
   );
