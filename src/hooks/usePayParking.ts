@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PaymentMethod } from '@/types/model'
 import { api } from '@/lib/api'
-import { resolveGateId } from '@/hooks/useGates'
+import { resolveFloorGateId } from '@/hooks/useGates'
 
 export interface PayParkingInput {
   licensePlate: string
@@ -37,7 +37,7 @@ export function usePayParking() {
 
   return useMutation<PayParkingResult, Error, PayParkingInput>({
     mutationFn: async ({ licensePlate, paymentMethod, lostTicket }) => {
-      const exitGateId = await resolveGateId(queryClient, 'Exit')
+      const exitGateId = await resolveFloorGateId(queryClient, 'Exit')
       const res = await api.post<BeCheckOutResponse>('/staff/sessions/check-out', {
         licensePlate,
         exitGateId,
