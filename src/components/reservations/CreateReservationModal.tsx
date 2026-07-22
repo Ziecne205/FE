@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
 import { useVehicleTypes } from '@/hooks/useAvailability'
-import { useCreateReservation } from '@/hooks/useReservations'
+import { useCreateReservation, useReservationQuote } from '@/hooks/useReservations'
 import type { AppError } from '@/lib/api'
 import type { VehicleType } from '@/types/model'
 
@@ -50,6 +50,10 @@ function ModalBody({ userId, canOverride, onClose, vehicleTypes }: ModalBodyProp
   const [exit, setExit] = useState('')
   const [quotaLocked, setQuotaLocked] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Ước tính phí + cọc động — deposit giờ tính trên phí cả khung giờ (không phải basePrice), luôn
+  // hỏi BE thay vì tự tính ở FE để khớp công thức mới nhất.
+  const quote = useReservationQuote(vehicleTypeId, entry, exit)
 
   const submit = async (override: boolean) => {
     setError(null)
@@ -126,6 +130,13 @@ function ModalBody({ userId, canOverride, onClose, vehicleTypes }: ModalBodyProp
             <Input id="exit" type="datetime-local" value={exit} onChange={(e) => setExit(e.target.value)} />
           </div>
         </div>
+
+        {quote.data && !quotaLocked && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+            Phí ước tính <span className="font-semibold">{formatCurrency(quote.data.estimatedFee)}</span> · Cọc
+            cần thu <span className="font-semibold text-blue-700">{formatCurrency(quote.data.depositAmount)}</span>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, calculateDuration } from '@/lib/utils'
 import { usePayParking } from '@/hooks/usePayParking'
+import type { AppError } from '@/lib/api'
 import { FeeBreakdown } from './FeeBreakdown'
 import { PaymentQrPanel } from './PaymentQrPanel'
 import type { ExitPaymentProps, FeeBreakdownLine, PaymentMethod } from './types'
@@ -31,8 +32,12 @@ function computeBreakdown(entryTime: string, totalFee: number): FeeBreakdownLine
 export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: ExitPaymentProps) {
   const [method, setMethod] = useState<PaymentMethod>('QR')
   const [success, setSuccess] = useState(false)
+  const [pendingApproval, setPendingApproval] = useState(false)
   const [paidAmount, setPaidAmount] = useState(totalFee)
   const [isOverstay, setIsOverstay] = useState(false)
+  const [collectedAmount, setCollectedAmount] = useState(totalFee)
+  const [discountReason, setDiscountReason] = useState('')
+  const [requireDiscountReason, setRequireDiscountReason] = useState(false)
 
   const { mutate, isPending } = usePayParking()
 
@@ -41,15 +46,50 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
 
   function handleConfirm() {
     // Check-out thật theo biển số; BE trả về số tiền đã tính để hiển thị biên nhận.
+    // Cash: gửi kèm collectedAmount — nếu lệch quá cashToleranceVnd, BE báo CASH_AMOUNT_MISMATCH
+    // (chưa có discountReason) hoặc trả pendingApproval=true (đã có discountReason, chờ Manager duyệt).
     mutate(
-      { licensePlate, paymentMethod: method },
+      {
+        licensePlate,
+        paymentMethod: method,
+        collectedAmount: method === 'Cash' ? collectedAmount : undefined,
+        discountReason: method === 'Cash' && requireDiscountReason ? discountReason : undefined,
+      },
       {
         onSuccess: (res) => {
           setPaidAmount(res.amount || totalFee)
           setIsOverstay(res.isOverstay)
-          setSuccess(true)
+          if (res.pendingApproval) {
+            setPendingApproval(true)
+          } else {
+            setSuccess(true)
+          }
+        },
+        onError: (err) => {
+          const appErr = err as AppError
+          if (appErr.code === 'CASH_AMOUNT_MISMATCH') {
+            setRequireDiscountReason(true)
+          }
         },
       },
+    )
+  }
+
+  if (pendingApproval) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+          <Clock className="h-10 w-10 text-amber-600" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-gray-900">Đang chờ Manager duyệt</p>
+          <p className="mt-1 font-mono text-lg font-semibold text-gray-600">{licensePlate}</p>
+          <p className="mt-2 max-w-sm text-sm text-gray-500">
+            Số tiền mặt báo thu lệch so với số hệ thống tính. Phiên đỗ xe vẫn đang mở — chờ Manager duyệt hoặc
+            từ chối yêu cầu này ở mục Duyệt thanh toán.
+          </p>
+        </div>
+      </div>
     )
   }
 
@@ -72,7 +112,7 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
             <div>
               <p className="text-sm font-semibold text-amber-800">Quá hạn ưu đãi (Overstay)</p>
               <p className="text-xs text-amber-700 mt-1">
-                Phiên đỗ xe đã quá 24h grace period. Phụ phí 1 giờ (Extra Hour) đã được cộng vào tổng tiền.
+                Phiên đỗ xe đã vượt thời gian cho phép — phụ phí quá giờ đã được cộng vào tổng tiền.
               </p>
             </div>
           </div>
@@ -108,6 +148,11 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
           onMethodChange={setMethod}
           onConfirm={handleConfirm}
           isPending={isPending}
+          collectedAmount={collectedAmount}
+          onCollectedAmountChange={setCollectedAmount}
+          discountReason={discountReason}
+          onDiscountReasonChange={setDiscountReason}
+          requireDiscountReason={requireDiscountReason}
         />
       </div>
 

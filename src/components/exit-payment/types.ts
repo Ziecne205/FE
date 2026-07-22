@@ -31,4 +31,10 @@ export interface PaymentQrPanelProps {
   readonly onMethodChange: (method: PaymentMethod) => void
   readonly onConfirm: () => void
   readonly isPending: boolean
+  readonly collectedAmount: number
+  readonly onCollectedAmountChange: (amount: number) => void
+  readonly discountReason: string
+  readonly onDiscountReasonChange: (reason: string) => void
+  /** BE vừa báo CASH_AMOUNT_MISMATCH ở lần gửi trước — bắt buộc nhập lý do chênh lệch để gửi lại. */
+  readonly requireDiscountReason: boolean
 }

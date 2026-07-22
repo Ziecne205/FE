@@ -16,6 +16,11 @@ import type {
   PricingPolicy,
   FeeConfig,
   LotAvailability,
+  CheckoutApproval,
+  Payment,
+  PaymentType,
+  PaymentMethod,
+  PaymentStatus,
 } from '@/types/model'
 
 // ── BE DTO shapes ───────────────────────────────────────────────────────────────
@@ -55,7 +60,8 @@ export interface BeActiveSession {
   hasCard: boolean
   parkedMinutes: number
   isForceCheckIn?: boolean | null  // staff overrode plate mismatch
-  isOverstay?: boolean | null      // session exceeded 24h grace period
+  isOverstay?: boolean | null      // session exceeded 24h grace period (walk-in) / expectedExitTime (reservation)
+  isOverstayFlagged?: boolean | null // background job: reservation-backed session past expectedExitTime+30min, still open
   estimatedFee?: number | null     // phí tạm tính theo bảng giá đến hiện tại
 }
 
@@ -72,6 +78,8 @@ export interface BeIncident {
   resolvedAt?: string | null
   resolutionNotes?: string | null
   createdAt?: string | null
+  takenOverAt?: string | null
+  escalatedAt?: string | null
 }
 
 export interface BeReservation {
@@ -115,6 +123,8 @@ export interface BeFeeConfig {
   overstayRatePerHour: number
   noShowGraceMinutes: number
   blacklistThreshold: number
+  depositPaymentWindowMinutes?: number | null
+  cashToleranceVnd?: number | null
 }
 
 export interface BeParkingInfo {
@@ -167,6 +177,43 @@ export interface BeCheckOutResponse {
   plateMismatch: boolean
   slotFreed?: string | null
   isOverstay?: boolean | null
+  // true khi collectedAmount lệch quá CASH_TOLERANCE_VND — checkout CHƯA hoàn tất, chờ Manager duyệt.
+  pendingApproval?: boolean | null
+  approvalRequestId?: number | null
+}
+
+/**
+ * GET /manager/payments — BE trả thẳng entity Payment; `session`/`reservation` là @DBRef @JsonIgnore
+ * nên không có trong JSON, chỉ dùng transactionReference để đối chiếu thủ công.
+ */
+export interface BePayment {
+  paymentId: number
+  amount: number
+  paymentMethod: string
+  paymentTime?: string | null
+  paymentStatus: string
+  transactionReference?: string | null
+  paymentPurpose?: string | null
+  refundStatus?: string | null
+  refundedAt?: string | null
+}
+
+/** GET /manager/checkout-approvals — BE trả thẳng entity, không qua DTO. */
+export interface BeCheckoutApproval {
+  approvalId: number
+  sessionId: number
+  licensePlate: string
+  requestedAmount: number
+  computedAmount: number
+  reason?: string | null
+  requestedBy?: string | null
+  status: string // Open | Approved | Rejected
+  decidedBy?: string | null
+  decidedAt?: string | null
+  createdAt?: string | null
+  overstay?: boolean | null
+  totalFee?: number | null
+  plateMismatch?: boolean | null
 }
 
 export interface BeRevenueReport {
@@ -235,6 +282,7 @@ export function mapActiveSession(s: BeActiveSession): ParkingSession {
     status: s.status as SessionStatus,
     isForceCheckIn: s.isForceCheckIn ?? undefined,
     isOverstay: s.isOverstay ?? undefined,
+    isOverstayFlagged: s.isOverstayFlagged ?? undefined,
   }
 }
 
@@ -249,6 +297,8 @@ export function mapIncident(i: BeIncident): Incident {
     handledByStaffId: i.handledByStaffId != null ? String(i.handledByStaffId) : undefined,
     resolutionNotes: i.resolutionNotes ?? undefined,
     resolveAt: i.resolvedAt ?? undefined,
+    takenOverAt: i.takenOverAt ?? undefined,
+    escalatedAt: i.escalatedAt ?? undefined,
   }
 }
 
@@ -301,6 +351,43 @@ export function mapFeeConfig(c: BeFeeConfig): FeeConfig {
     overstayRatePerHour: Number(c.overstayRatePerHour ?? 0),
     noShowGraceMinutes: Number(c.noShowGraceMinutes ?? 0),
     blacklistThreshold: Number(c.blacklistThreshold ?? 0),
+    depositPaymentWindowMinutes:
+      c.depositPaymentWindowMinutes != null ? Number(c.depositPaymentWindowMinutes) : undefined,
+    cashToleranceVnd: c.cashToleranceVnd != null ? Number(c.cashToleranceVnd) : undefined,
+  }
+}
+
+export function mapPayment(p: BePayment): Payment {
+  return {
+    paymentId: String(p.paymentId),
+    paymentType: (p.paymentPurpose as PaymentType) ?? 'Parking',
+    paymentMethod: p.paymentMethod as PaymentMethod,
+    amount: Number(p.amount ?? 0),
+    status: p.paymentStatus as PaymentStatus,
+    paidAt: p.paymentTime ?? undefined,
+    transactionReference: p.transactionReference ?? undefined,
+    paymentPurpose: (p.paymentPurpose as Payment['paymentPurpose']) ?? undefined,
+    refundStatus: (p.refundStatus as Payment['refundStatus']) ?? null,
+    refundedAt: p.refundedAt ?? undefined,
+  }
+}
+
+export function mapCheckoutApproval(a: BeCheckoutApproval): CheckoutApproval {
+  return {
+    approvalId: String(a.approvalId),
+    sessionId: String(a.sessionId),
+    licensePlate: a.licensePlate,
+    requestedAmount: Number(a.requestedAmount ?? 0),
+    computedAmount: Number(a.computedAmount ?? 0),
+    reason: a.reason ?? undefined,
+    requestedBy: a.requestedBy ?? undefined,
+    status: (a.status as CheckoutApproval['status']) ?? 'Open',
+    decidedBy: a.decidedBy ?? undefined,
+    decidedAt: a.decidedAt ?? undefined,
+    createdAt: a.createdAt ?? undefined,
+    overstay: a.overstay ?? undefined,
+    totalFee: a.totalFee != null ? Number(a.totalFee) : undefined,
+    plateMismatch: a.plateMismatch ?? undefined,
   }
 }
 

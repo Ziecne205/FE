@@ -4,6 +4,47 @@ import { api, type AppError } from '@/lib/api'
 import type { Reservation, ReservationStatus } from '@/types/model'
 import { mapReservation, type BeReservation } from '@/lib/beApi'
 
+export interface ReservationQuote {
+  estimatedFee: number
+  depositAmount: number
+}
+
+interface BeReservationQuote {
+  estimatedFee: number
+  depositAmount: number
+}
+
+/**
+ * Ước tính phí đỗ + tiền cọc cho một khung giờ (không tạo booking) — GET /driver/reservations/quote.
+ * Deposit giờ tính trên phí ước tính cả khung giờ (không phải basePrice) × depositPercent, nên FE
+ * không tự tính mà luôn gọi BE để khớp công thức mới nhất.
+ */
+export function useReservationQuote(
+  vehicleTypeId: string,
+  expectedEntryTime: string,
+  expectedExitTime: string,
+) {
+  const enabled =
+    !!vehicleTypeId &&
+    !!expectedEntryTime &&
+    !!expectedExitTime &&
+    new Date(expectedExitTime) > new Date(expectedEntryTime)
+  return useQuery({
+    queryKey: ['reservation-quote', vehicleTypeId, expectedEntryTime, expectedExitTime],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        vehicleTypeId,
+        entryTime: expectedEntryTime,
+        exitTime: expectedExitTime,
+      })
+      const q = await api.get<BeReservationQuote>(`/driver/reservations/quote?${params.toString()}`)
+      return { estimatedFee: Number(q.estimatedFee ?? 0), depositAmount: Number(q.depositAmount ?? 0) }
+    },
+    enabled,
+    retry: false,
+  })
+}
+
 export interface ReservationFilter {
   status?: ReservationStatus | 'all'
 }

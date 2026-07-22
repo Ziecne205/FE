@@ -143,14 +143,28 @@ export function UsersManagement() {
                       {u.createdAt ? formatDateTime(u.createdAt) : '—'}
                     </TableCell>
                     <TableCell>
-                      <span
-                        className={cn(
-                          'inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium',
-                          getStatusColor(u.status),
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium',
+                            getStatusColor(u.status),
+                          )}
+                        >
+                          {STATUS_LABELS[u.status] ?? u.status}
+                        </span>
+                        {u.blacklisted && (
+                          <span
+                            className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
+                            title={
+                              u.consecutiveNoShows != null
+                                ? `${u.consecutiveNoShows} lần không đến liên tiếp`
+                                : undefined
+                            }
+                          >
+                            Đã hạn chế đặt chỗ
+                          </span>
                         )}
-                      >
-                        {STATUS_LABELS[u.status] ?? u.status}
-                      </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">

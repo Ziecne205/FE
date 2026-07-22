@@ -44,7 +44,14 @@ export function CheckoutSessionList({ sessions, onCheckout }: CheckoutSessionLis
             ) : (
               sessions.map((s) => (
                 <TableRow key={s.sessionId} className="hover:bg-gray-50">
-                  <TableCell className="font-mono font-bold">{s.licensePlate}</TableCell>
+                  <TableCell className="font-mono font-bold">
+                    {s.licensePlate}
+                    {s.isOverstayFlagged && (
+                      <span className="ml-1.5 rounded bg-red-50 px-1 py-0.5 text-[10px] font-normal text-red-600">
+                        Quá giờ
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono text-sm">{s.actualSlotCode ?? '—'}</TableCell>
                   <TableCell className="text-sm text-gray-600">{formatDateTime(s.entryTime)}</TableCell>
                   <TableCell className="text-sm text-gray-600">

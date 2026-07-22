@@ -161,7 +161,9 @@ function FeeConfigForm({ fee }: FeeConfigFormProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="noShowGraceMinutes">Gia hạn khi khách không đến (phút)</Label>
+        <Label htmlFor="noShowGraceMinutes" className="text-gray-400">
+          Gia hạn khi khách không đến (phút) — không còn tác dụng
+        </Label>
         <Input
           id="noShowGraceMinutes"
           type="number"
@@ -169,6 +171,10 @@ function FeeConfigForm({ fee }: FeeConfigFormProps) {
           value={form.noShowGraceMinutes}
           onChange={(e) => setForm({ ...form, noShowGraceMinutes: Number(e.target.value) })}
         />
+        <span className="text-xs text-gray-400">
+          No-show giờ tính hoàn toàn theo hạn check-in riêng của từng booking, đổi giá trị này không
+          ảnh hưởng gì.
+        </span>
       </div>
       <div className="flex flex-col gap-1">
         <Label htmlFor="blacklistThreshold">Ngưỡng blacklist (số lần không đến)</Label>
@@ -179,6 +185,29 @@ function FeeConfigForm({ fee }: FeeConfigFormProps) {
           value={form.blacklistThreshold}
           onChange={(e) => setForm({ ...form, blacklistThreshold: Number(e.target.value) })}
         />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="depositPaymentWindowMinutes">Thời hạn thanh toán cọc (phút)</Label>
+        <Input
+          id="depositPaymentWindowMinutes"
+          type="number"
+          min={1}
+          value={form.depositPaymentWindowMinutes ?? ''}
+          onChange={(e) => setForm({ ...form, depositPaymentWindowMinutes: Number(e.target.value) })}
+        />
+        <span className="text-xs text-gray-400">Booking Pending tự hết hạn nếu chưa thanh toán cọc trong thời gian này.</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="cashToleranceVnd">Sai số tiền mặt cho phép (đ)</Label>
+        <Input
+          id="cashToleranceVnd"
+          type="number"
+          min={0}
+          step={1000}
+          value={form.cashToleranceVnd ?? ''}
+          onChange={(e) => setForm({ ...form, cashToleranceVnd: Number(e.target.value) })}
+        />
+        <span className="text-xs text-gray-400">Lệch quá mức này giữa tiền mặt Staff báo thu và số hệ thống tính sẽ cần Manager duyệt.</span>
       </div>
       <div className="sm:col-span-2">
         <Button type="submit" disabled={updateFee.isPending} className="gap-2">

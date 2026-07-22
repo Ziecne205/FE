@@ -25,6 +25,10 @@ export interface AdminUser {
   status: string // Active | Inactive | Banned
   createdAt?: string | null
   updatedAt?: string | null
+  // Riêng biệt với `status` — chặn đặt chỗ (USER_BLACKLISTED) sau nhiều lần no-show liên tiếp,
+  // tài khoản vẫn có thể đang Active.
+  blacklisted?: boolean | null
+  consecutiveNoShows?: number | null
 }
 
 export interface SystemConfigItem {
