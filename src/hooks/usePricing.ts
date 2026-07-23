@@ -56,8 +56,16 @@ export function useUpdatePricing() {
       queryClient.invalidateQueries({ queryKey: ['pricing-policies'] })
       toast.success('Đã cập nhật bảng giá')
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(errorMessage(error)),
   })
+}
+
+/** ACTIVE_SESSIONS_EXIST cần một câu rõ ràng thay vì message chung của server. */
+function errorMessage(error: AppError): string {
+  if (error.code === 'ACTIVE_SESSIONS_EXIST') {
+    return 'Không thể thay đổi khi vẫn còn phiên đỗ xe đang hoạt động (Admitted/Parked/Moved)'
+  }
+  return error.message
 }
 
 /** Chính sách phí (cọc %, overstay, no-show, blacklist) — GET /manager/fee-config. */
@@ -83,6 +91,8 @@ export function useUpdateFeeConfig() {
         overstayRatePerHour: input.overstayRatePerHour ?? current.overstayRatePerHour,
         noShowGraceMinutes: input.noShowGraceMinutes ?? current.noShowGraceMinutes,
         blacklistThreshold: input.blacklistThreshold ?? current.blacklistThreshold,
+        depositPaymentWindowMinutes: input.depositPaymentWindowMinutes ?? current.depositPaymentWindowMinutes,
+        cashToleranceVnd: input.cashToleranceVnd ?? current.cashToleranceVnd,
       }
       const saved = await api.put<BeFeeConfig>('/manager/fee-config', body)
       return mapFeeConfig(saved)
@@ -91,6 +101,6 @@ export function useUpdateFeeConfig() {
       queryClient.invalidateQueries({ queryKey: ['fee-config'] })
       toast.success('Đã lưu chính sách phí')
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(errorMessage(error)),
   })
 }

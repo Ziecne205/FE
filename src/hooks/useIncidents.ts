@@ -44,6 +44,27 @@ export interface ResolveIncidentInput {
   resolutionNotes?: string
 }
 
+/**
+ * Nhận xử lý (claim) sự cố — PATCH /manager/incidents/{id}/take-over. Manager-only, atomic ở BE
+ * (findAndModify) — thua trong race sẽ nhận INCIDENT_ALREADY_TAKEN thay vì lỗi chung chung.
+ */
+export function useTakeOverIncident() {
+  const queryClient = useQueryClient()
+  return useMutation<BeIncident, AppError, string>({
+    mutationFn: (incidentId) => api.patch<BeIncident>(`/manager/incidents/${incidentId}/take-over`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+      toast.success('Đã nhận xử lý sự cố')
+    },
+    onError: (error) => {
+      if (error.code === 'INCIDENT_ALREADY_TAKEN') {
+        queryClient.invalidateQueries({ queryKey: ['incidents'] })
+      }
+      toast.error(error.message)
+    },
+  })
+}
+
 export function useResolveIncident() {
   const queryClient = useQueryClient()
   return useMutation({

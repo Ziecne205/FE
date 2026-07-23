@@ -90,6 +90,14 @@ const ErrorCodes = {
   INVALID_LICENSE_PLATE: 'INVALID_LICENSE_PLATE',
   QUOTA_FULL: 'QUOTA_FULL', // booking window locked (capacity-reservation)
   FULL: 'FULL', // walk-in admission denied — no headroom
+  MAX_RESERVATIONS_REACHED: 'MAX_RESERVATIONS_REACHED', // driver already has 3 active reservations
+  LICENSE_PLATE_OVERLAP: 'LICENSE_PLATE_OVERLAP', // plate already booked in an overlapping window
+  USER_BLACKLISTED: 'USER_BLACKLISTED', // too many consecutive no-shows
+  CANCEL_TOO_LATE: 'CANCEL_TOO_LATE', // manual cancel rejected, < 3h before expectedEntryTime
+  ACTIVE_SESSIONS_EXIST: 'ACTIVE_SESSIONS_EXIST', // fee-config/pricing-policy change blocked by open sessions
+  CASH_AMOUNT_MISMATCH: 'CASH_AMOUNT_MISMATCH', // checkout cash tolerance exceeded, discountReason required
+  INCIDENT_ALREADY_TAKEN: 'INCIDENT_ALREADY_TAKEN', // incident take-over race lost
+  DUPLICATE_OPEN_SESSION: 'DUPLICATE_OPEN_SESSION', // plate already has an open session
 
   // Server
   INTERNAL_ERROR: 'INTERNAL_ERROR',
@@ -128,6 +136,14 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   INVALID_LICENSE_PLATE: 'Biển số xe không hợp lệ',
   QUOTA_FULL: 'Khung giờ đã khóa đặt chỗ',
   FULL: 'Bãi đã đầy cho loại xe này',
+  MAX_RESERVATIONS_REACHED: 'Bạn đã có tối đa 3 đặt chỗ đang hoạt động',
+  LICENSE_PLATE_OVERLAP: 'Biển số này đã có đặt chỗ trong khung giờ bạn chọn',
+  USER_BLACKLISTED: 'Tài khoản đã bị hạn chế đặt chỗ do nhiều lần không đến (no-show)',
+  CANCEL_TOO_LATE: 'Không thể hủy booking trong vòng 3 giờ trước giờ vào',
+  ACTIVE_SESSIONS_EXIST: 'Không thể thay đổi khi vẫn còn phiên đỗ xe đang hoạt động',
+  CASH_AMOUNT_MISMATCH: 'Số tiền thu lệch so với số tiền tính toán — vui lòng nhập lý do chênh lệch',
+  INCIDENT_ALREADY_TAKEN: 'Sự cố này đã được người khác nhận xử lý',
+  DUPLICATE_OPEN_SESSION: 'Biển số này đang có một phiên đỗ xe khác chưa đóng',
 
   // Server
   INTERNAL_ERROR: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau',

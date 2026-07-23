@@ -77,18 +77,24 @@ export interface ParkingSession {
   isPaid: boolean;
   status: SessionStatus;
   isForceCheckIn?: boolean; // staff overrode a plate mismatch at check-in
-  isOverstay?: boolean;     // session ran past the 24-hour overstay grace period
+  isOverstay?: boolean;     // computed at checkout — reservation: past expectedExitTime; walk-in: past 24h grace
+  isOverstayFlagged?: boolean; // background job flag on a still-open reservation-backed session (expectedExitTime + 30min passed)
 }
 
 export interface Payment {
   paymentId: string;
-  reservationId?: string | null;
-  sessionId?: string | null;
+  // BE @JsonIgnore session/reservation trên entity Payment — GET /manager/payments không trả plate
+  // hay reservationId, chỉ có transactionReference (mã PayOS) để đối chiếu thủ công.
   paymentType: PaymentType;
   paymentMethod: PaymentMethod;
   amount: number;
   status: PaymentStatus;
   paidAt?: string;
+  transactionReference?: string;
+  paymentPurpose?: 'Deposit' | 'Fee' | 'Extension' | 'Refund';
+  /** null = chưa từng yêu cầu hoàn tiền. */
+  refundStatus?: 'Requested' | 'AutoRefunded' | 'ManualRequired' | 'Failed' | null;
+  refundedAt?: string;
 }
 
 export interface Incident {
@@ -102,6 +108,26 @@ export interface Incident {
   handledByStaffId?: string;
   resolutionNotes?: string;
   resolveAt?: string;
+  takenOverAt?: string; // Manager claimed it (atomic take-over)
+  escalatedAt?: string; // auto-reopened after being stuck InProgress too long
+}
+
+/** Checkout tạm giữ chờ Manager duyệt vì tiền mặt thu lệch quá cashToleranceVnd. */
+export interface CheckoutApproval {
+  approvalId: string;
+  sessionId: string;
+  licensePlate: string;
+  requestedAmount: number; // Staff đã báo thu thực tế tại cổng
+  computedAmount: number; // hệ thống tính là phải thu
+  reason?: string; // discountReason của Staff
+  requestedBy?: string;
+  status: 'Open' | 'Approved' | 'Rejected';
+  decidedBy?: string;
+  decidedAt?: string;
+  createdAt?: string;
+  overstay?: boolean;
+  totalFee?: number;
+  plateMismatch?: boolean;
 }
 
 // ── Capacity / availability — the source of truth for "occupancy" ───────────────
@@ -165,10 +191,13 @@ export interface PricingPolicy {
 
 /** Các chính sách phí cấu hình bởi Manager. */
 export interface FeeConfig {
-  depositPercent: number; // % cọc booking (mặc định 20)
+  depositPercent: number; // % cọc booking (mặc định 50 — tính trên phí ước tính cả khung giờ, không phải basePrice)
   overstayRatePerHour: number; // phí quá giờ / giờ
-  noShowGraceMinutes: number; // ân hạn no-show
-  blacklistThreshold: number; // số lần no-show liên tiếp → blacklist
+  /** @deprecated Legacy — no-show giờ tính hoàn toàn theo checkinDeadline của từng booking, đổi giá trị này không còn tác dụng. */
+  noShowGraceMinutes: number;
+  blacklistThreshold: number; // số lần no-show liên tiếp → blacklist (mặc định 3)
+  depositPaymentWindowMinutes?: number; // thời gian tối đa để thanh toán cọc trước khi booking tự hết hạn (mặc định 3 phút)
+  cashToleranceVnd?: number; // sai số VND cho phép giữa tiền mặt thu thực tế và số hệ thống tính, trước khi cần Manager duyệt
 }
 
 export interface User {
