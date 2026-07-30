@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, RefreshCw, Plus } from 'lucide-react'
+import { Search, RefreshCw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,20 +13,14 @@ import {
 } from '@/components/ui/select'
 import { ReservationStatsBar } from './ReservationStatsBar'
 import { ReservationTable } from './ReservationTable'
-import { CreateReservationModal } from './CreateReservationModal'
 import { CancelReservationDialog } from './CancelReservationDialog'
 import { useReservations, useCancelReservation } from '@/hooks/useReservations'
-import { useAuthStore } from '@/store'
 import { RESERVATION_STATUS_LABELS } from '@/lib/constants'
 import type { Reservation, ReservationStatus } from '@/types/model'
 
 export function Reservations() {
-  const { user } = useAuthStore()
-  const isManager = user?.role === 'Manager'
-
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'all'>('all')
   const [search, setSearch] = useState('')
-  const [createOpen, setCreateOpen] = useState(false)
   const [cancelling, setCancelling] = useState<Reservation | null>(null)
 
   const { data: reservations = [], isLoading, refetch } = useReservations({})
@@ -62,12 +56,6 @@ export function Reservations() {
           <h2 className="text-2xl font-semibold text-gray-900">Đặt chỗ</h2>
           <p className="text-sm text-gray-600">Giữ suất chỗ theo khung giờ (không gán ô)</p>
         </div>
-        {isManager && (
-          <Button className="gap-2" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Tạo đặt chỗ
-          </Button>
-        )}
       </div>
 
       <ReservationStatsBar reservations={reservations} />
@@ -108,12 +96,6 @@ export function Reservations() {
         <ReservationTable reservations={filtered} onCancel={setCancelling} />
       )}
 
-      <CreateReservationModal
-        open={createOpen}
-        userId={user?.id}
-        canOverride={isManager}
-        onClose={() => setCreateOpen(false)}
-      />
       <CancelReservationDialog
         reservation={cancelling}
         isCancelling={cancelReservation.isPending}
