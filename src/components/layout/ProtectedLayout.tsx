@@ -16,7 +16,6 @@ const routeTitles: Record<string, string> = {
   '/capacity': 'Bảng điều khiển Sức chứa',
   '/slots': 'Sơ đồ chỗ đỗ',
   '/sessions': 'Phiên đỗ xe',
-  '/bookings': 'Quản lý đặt chỗ',
   '/incidents': 'Sự cố',
   '/exceptions': 'Xử lý ngoại lệ',
   '/quota': 'Hạn mức đặt chỗ',
