@@ -48,13 +48,24 @@ export function useEntryGate(failureRate: number, onEvent: (e: EventLogEntry) =>
       } else if (result.reason === 'FULL') {
         setState('FULL')
         onEvent(mkEvent({ kind: 'ERROR', message: 'Bãi xe đã đầy — từ chối vào.', plate: scannedPlate }))
+      } else if (result.reason === 'DUPLICATE_OPEN_SESSION') {
+        setState('DUPLICATE')
+        onEvent(
+          mkEvent({
+            kind: 'ERROR',
+            message: 'Xe đã trong bãi đậu, vui lòng kiểm tra lại.',
+            plate: scannedPlate,
+          }),
+        )
+        toast.error('Xe đã trong bãi đậu, vui lòng kiểm tra lại.')
       } else {
         setState('IDLE')
         toast.error(result.message ?? 'Lỗi không xác định.')
       }
     } catch {
       setState('IDLE')
-      toast.error('Lỗi kết nối cổng vào.')
+      onEvent(mkEvent({ kind: 'ERROR', message: 'Không kết nối được tới máy chủ, vui lòng thử lại.', plate: scannedPlate }))
+      toast.error('Không kết nối được tới máy chủ, vui lòng thử lại.')
     }
   }
 
@@ -80,12 +91,23 @@ export function useEntryGate(failureRate: number, onEvent: (e: EventLogEntry) =>
       } else if (result.reason === 'FULL') {
         setState('FULL')
         onEvent(mkEvent({ kind: 'ERROR', message: 'Bãi xe đã đầy.', plate: manualPlate }))
+      } else if (result.reason === 'DUPLICATE_OPEN_SESSION') {
+        setState('DUPLICATE')
+        onEvent(
+          mkEvent({
+            kind: 'ERROR',
+            message: 'Xe đã trong bãi đậu, vui lòng kiểm tra lại.',
+            plate: manualPlate,
+          }),
+        )
+        toast.error('Xe đã trong bãi đậu, vui lòng kiểm tra lại.')
       } else {
         toast.error(result.message ?? 'Lỗi không xác định.')
         setState('SCAN_FAILED')
       }
     } catch {
-      toast.error('Lỗi kết nối.')
+      onEvent(mkEvent({ kind: 'ERROR', message: 'Không kết nối được tới máy chủ, vui lòng thử lại.', plate: manualPlate }))
+      toast.error('Không kết nối được tới máy chủ, vui lòng thử lại.')
       setState('SCAN_FAILED')
     }
   }

@@ -10,13 +10,15 @@ export function EntryStatusBadge({ state }: { state: EntryState }) {
           ? 'bg-green-100 text-green-700'
           : state === 'FULL'
             ? 'bg-red-100 text-red-700 animate-pulse'
-            : state === 'SCAN_FAILED'
-              ? 'bg-yellow-100 text-yellow-700'
-              : state === 'PLATE_MISMATCH'
-                ? 'bg-orange-100 text-orange-700'
-                : state === 'SCANNING'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-500'
+            : state === 'DUPLICATE'
+              ? 'bg-red-100 text-red-700 animate-pulse'
+              : state === 'SCAN_FAILED'
+                ? 'bg-yellow-100 text-yellow-700'
+                : state === 'PLATE_MISMATCH'
+                  ? 'bg-orange-100 text-orange-700'
+                  : state === 'SCANNING'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-500'
       }`}
     >
       {state === 'IDLE' && 'Chờ quét'}
@@ -24,6 +26,7 @@ export function EntryStatusBadge({ state }: { state: EntryState }) {
       {state === 'SCAN_FAILED' && 'Quét lỗi'}
       {state === 'PLATE_MISMATCH' && 'Không khớp'}
       {state === 'FULL' && 'HẾT CHỖ'}
+      {state === 'DUPLICATE' && 'ĐÃ TRONG BÃI'}
       {state === 'ADMITTED' && 'Đã vào'}
     </span>
   )
@@ -59,6 +62,13 @@ export function EntryCameraFeed({
       {state === 'FULL' && (
         <div className="absolute inset-0 bg-red-900/60 flex items-center justify-center">
           <span className="text-white text-2xl font-black tracking-widest">HẾT CHỖ</span>
+        </div>
+      )}
+      {state === 'DUPLICATE' && (
+        <div className="absolute inset-0 bg-red-900/60 flex items-center justify-center text-center px-4">
+          <span className="text-white text-lg font-black tracking-wide">
+            XE ĐÃ TRONG BÃI ĐẬU, VUI LÒNG KIỂM TRA LẠI
+          </span>
         </div>
       )}
       {state === 'ADMITTED' && (
@@ -208,6 +218,18 @@ export function FullPanel({ onReset }: { onReset: () => void }) {
     <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-center">
       <p className="text-red-700 font-bold text-lg">HẾT CHỖ</p>
       <p className="text-red-600 text-sm mt-1">Bãi xe không còn chỗ trống. Từ chối xe vào.</p>
+      <button onClick={onReset} className="mt-3 text-xs text-gray-500 hover:underline">
+        Đặt lại
+      </button>
+    </div>
+  )
+}
+
+export function DuplicatePanel({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-center">
+      <p className="text-red-700 font-bold text-lg">Xe đã trong bãi đậu, vui lòng kiểm tra lại</p>
+      <p className="text-red-600 text-sm mt-1">Biển số này đang có một phiên đỗ khác chưa check-out.</p>
       <button onClick={onReset} className="mt-3 text-xs text-gray-500 hover:underline">
         Đặt lại
       </button>

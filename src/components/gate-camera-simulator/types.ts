@@ -60,6 +60,7 @@ export type EntryState =
   | 'SCAN_FAILED'       // → reveal manual input
   | 'PLATE_MISMATCH'    // → offer Force Check-in
   | 'FULL'              // → HẾT CHỖ
+  | 'DUPLICATE'         // → xe đã có phiên đỗ đang mở (biển số trùng)
   | 'ADMITTED'
 
 export type ExitState =

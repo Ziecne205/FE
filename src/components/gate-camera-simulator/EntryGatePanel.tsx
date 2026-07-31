@@ -8,6 +8,7 @@ import {
   ManualEntryPanel,
   PlateMismatchPanel,
   FullPanel,
+  DuplicatePanel,
   AdmittedPanel,
 } from './EntryGateParts'
 import type { EntryGatePanelProps } from './types'
@@ -60,6 +61,7 @@ export function EntryGatePanel({ failureRate, onEvent }: EntryGatePanelProps) {
         )}
 
         {g.state === 'FULL' && <FullPanel onReset={g.reset} />}
+        {g.state === 'DUPLICATE' && <DuplicatePanel onReset={g.reset} />}
         {g.state === 'ADMITTED' && <AdmittedPanel onReset={g.reset} />}
       </div>
     </section>
