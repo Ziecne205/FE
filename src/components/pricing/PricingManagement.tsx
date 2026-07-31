@@ -89,6 +89,7 @@ function PricingPolicyRow({ policy }: { readonly policy: PricingPolicy }) {
           <input
             type="date"
             value={form.effectiveDate}
+            min={new Date().toISOString().split('T')[0]}
             onChange={(e) => setForm((s) => ({ ...s, effectiveDate: e.target.value }))}
             className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
