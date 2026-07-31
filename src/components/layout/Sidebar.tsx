@@ -24,6 +24,7 @@ import {
   ScrollText,
   MonitorDot,
   Wallet,
+  HandCoins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ const managerNavItems = [
   { href: '/checkout-approvals', icon: ShieldCheck, label: 'Duyệt thanh toán' },
   { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
   { href: '/pricing', icon: DollarSign, label: 'Quản lý giá' },
-  { href: '/payments', icon: Wallet, label: 'Hoàn cọc thủ công' },
+  { href: '/manual-refunds', icon: HandCoins, label: 'Hoàn cọc thủ công' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
   { href: '/accounts', icon: UserPlus, label: 'Tạo tài khoản' },
 ];
