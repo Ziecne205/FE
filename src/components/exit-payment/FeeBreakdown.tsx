@@ -40,9 +40,11 @@ export function FeeBreakdown({
             <div key={line.label} className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
                 {line.label}
-                <span className="ml-1 text-gray-400">
-                  ({formatCurrency(line.ratePerHour)}/h × {line.hours}h)
-                </span>
+                {line.ratePerHour > 0 && (
+                  <span className="ml-1 text-gray-400">
+                    ({formatCurrency(line.ratePerHour)}/h × {line.hours}h)
+                  </span>
+                )}
               </span>
               <span className="font-medium text-gray-800">{formatCurrency(line.subtotal)}</span>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, calculateDuration } from '@/lib/utils'
@@ -69,6 +70,10 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
           const appErr = err as AppError
           if (appErr.code === 'CASH_AMOUNT_MISMATCH') {
             setRequireDiscountReason(true)
+          } else {
+            // Truoc day loi khac CASH_AMOUNT_MISMATCH bi "nuot" — nut khong lam gi ca, khien
+            // Staff tuong nhu khong hoat dong. Luon hien thong bao ro rang cho MOI loi khac.
+            toast.error(appErr.message || 'Check-out thất bại, vui lòng thử lại.')
           }
         },
       },
