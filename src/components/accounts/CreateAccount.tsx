@@ -28,8 +28,13 @@ type FormData = z.infer<typeof schema>
 const inputCls =
   'w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none'
 
+interface CreateAccountProps {
+  /** Goi sau khi tao thanh cong (vd de dong dialog) — ngoai viec form tu reset. */
+  onCreated?: () => void
+}
+
 /** Màn tạo tài khoản nội bộ (Manager/Staff) — dùng chung cho Manager & Admin. */
-export function CreateAccount() {
+export function CreateAccount({ onCreated }: CreateAccountProps = {}) {
   const [showPassword, setShowPassword] = useState(false)
   const createUser = useCreateUser()
 
@@ -53,7 +58,12 @@ export function CreateAccount() {
         email: data.email || undefined,
         roleName: data.roleName,
       },
-      { onSuccess: () => reset() },
+      {
+        onSuccess: () => {
+          reset()
+          onCreated?.()
+        },
+      },
     )
   }
 

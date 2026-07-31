@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, RefreshCw, KeyRound } from 'lucide-react'
+import { Search, RefreshCw, KeyRound, UserPlus } from 'lucide-react'
+import { CreateAccount } from '@/components/accounts/CreateAccount'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -51,6 +52,7 @@ export function UsersManagement() {
   const [search, setSearch] = useState('')
   const [resetTarget, setResetTarget] = useState<AdminUser | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
 
   const filtered = useMemo(
     () =>
@@ -81,9 +83,15 @@ export function UsersManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900">Quản lý tài khoản</h2>
-        <p className="text-sm text-gray-600">Khóa/mở tài khoản và đặt lại mật khẩu</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">Quản lý tài khoản</h2>
+          <p className="text-sm text-gray-600">Khóa/mở tài khoản, đặt lại mật khẩu và tạo tài khoản mới</p>
+        </div>
+        <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="h-4 w-4" />
+          Tạo tài khoản
+        </Button>
       </div>
 
       <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm md:flex-row">
@@ -206,6 +214,16 @@ export function UsersManagement() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Tạo tài khoản mới</DialogTitle>
+            <DialogDescription>Tạo tài khoản Quản lý (Manager) hoặc Nhân viên (Staff).</DialogDescription>
+          </DialogHeader>
+          <CreateAccount onCreated={() => setCreateOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
         <DialogContent className="sm:max-w-[420px]">
