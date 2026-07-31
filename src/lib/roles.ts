@@ -24,7 +24,6 @@ const ROUTE_ROLES: ReadonlyArray<{ prefix: string; roles: UserRole[] }> = [
   { prefix: '/quota', roles: ['Manager'] },
   { prefix: '/pricing', roles: ['Manager'] },
   { prefix: '/reports', roles: ['Manager'] },
-  { prefix: '/bookings', roles: ['Manager'] },
   { prefix: '/checkout-approvals', roles: ['Manager'] },
   { prefix: '/payments', roles: ['Manager'] },
   // Tạo tài khoản nội bộ (Manager tạo Manager/Staff).
