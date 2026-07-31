@@ -34,7 +34,14 @@ export function useApproveCheckout() {
       queryClient.invalidateQueries({ queryKey: ['slots'] })
       toast.success('Đã duyệt, checkout hoàn tất')
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      toast.error(error.message)
+      // ALREADY_DECIDED: 2 Manager cung mo 1 yeu cau, nguoi thu hai bam sau khi da xu ly — lam
+      // moi danh sach de yeu cau da xong bien mat, tranh Staff/Manager thay hang cu con "Open".
+      if (error.code === 'ALREADY_DECIDED') {
+        queryClient.invalidateQueries({ queryKey: ['checkout-approvals'] })
+      }
+    },
   })
 }
 
@@ -47,6 +54,11 @@ export function useRejectCheckout() {
       queryClient.invalidateQueries({ queryKey: ['checkout-approvals'] })
       toast.success('Đã từ chối yêu cầu checkout')
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      toast.error(error.message)
+      if (error.code === 'ALREADY_DECIDED') {
+        queryClient.invalidateQueries({ queryKey: ['checkout-approvals'] })
+      }
+    },
   })
 }

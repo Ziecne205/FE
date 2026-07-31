@@ -98,6 +98,10 @@ const ErrorCodes = {
   CASH_AMOUNT_MISMATCH: 'CASH_AMOUNT_MISMATCH', // checkout cash tolerance exceeded, discountReason required
   INCIDENT_ALREADY_TAKEN: 'INCIDENT_ALREADY_TAKEN', // incident take-over race lost
   DUPLICATE_OPEN_SESSION: 'DUPLICATE_OPEN_SESSION', // plate already has an open session
+  ALREADY_DECIDED: 'ALREADY_DECIDED', // checkout approval already approved/rejected by someone else
+  SELF_ACTION_FORBIDDEN: 'SELF_ACTION_FORBIDDEN', // admin cannot change own account status/password
+  PEER_ADMIN_FORBIDDEN: 'PEER_ADMIN_FORBIDDEN', // admin cannot lock/reset another admin
+  ALREADY_SETTLED: 'ALREADY_SETTLED', // deposit/online payment already covers the fee, no QR needed
 
   // Server
   INTERNAL_ERROR: 'INTERNAL_ERROR',
@@ -144,6 +148,10 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   CASH_AMOUNT_MISMATCH: 'Số tiền thu lệch so với số tiền tính toán — vui lòng nhập lý do chênh lệch',
   INCIDENT_ALREADY_TAKEN: 'Sự cố này đã được người khác nhận xử lý',
   DUPLICATE_OPEN_SESSION: 'Biển số này đang có một phiên đỗ xe khác chưa đóng',
+  ALREADY_DECIDED: 'Yêu cầu này đã được xử lý trước đó',
+  SELF_ACTION_FORBIDDEN: 'Không thể tự thao tác lên tài khoản của chính mình',
+  PEER_ADMIN_FORBIDDEN: 'Không thể thao tác lên tài khoản Admin khác',
+  ALREADY_SETTLED: 'Đã được thanh toán đủ qua cọc/trước đó, không cần tạo thêm QR',
 
   // Server
   INTERNAL_ERROR: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau',
