@@ -1,8 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -14,17 +12,40 @@ import {
 import { Search } from 'lucide-react'
 import { SessionStatsBar } from './SessionStatsBar'
 import { SessionTable } from './SessionTable'
-import { UpcomingReservationsTable } from './UpcomingReservationsTable'
 import { useOpenSessions, useUpcomingReservations } from '@/hooks/useSessions'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
+import type { ParkingSession } from '@/types/model'
 import type { SessionStatusFilter } from './types'
 
 export function ActiveSessions() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<SessionStatusFilter>('all')
 
-  const { data: sessions, isLoading } = useOpenSessions()
+  const { data: openSessions, isLoading } = useOpenSessions()
   const { data: upcoming, isLoading: isUpcomingLoading } = useUpcomingReservations()
+
+  // Dat cho chua check-in ("Chuan bi") duoc gop chung vao bang phien hoat dong — moi
+  // reservation la mot "phien ao" chua co sessionId that, entryTime = gio vao du kien, chua
+  // co o gan/o thuc te. Cho Staff thay truoc xe nao se den ngay tren cung 1 bang/bo loc.
+  const sessions: ParkingSession[] = useMemo(
+    () => [
+      ...upcoming.map(
+        (r): ParkingSession => ({
+          sessionId: `res-${r.reservationId}`,
+          reservationId: r.reservationId,
+          vehicleTypeId: '',
+          vehicleTypeName: r.vehicleTypeName ?? undefined,
+          licensePlate: r.licensePlate,
+          entryTime: r.expectedEntryTime,
+          totalFee: r.estimatedFeeAtBooking ?? undefined,
+          isPaid: r.depositStatus === 'Paid',
+          status: 'Preparing',
+        }),
+      ),
+      ...openSessions,
+    ],
+    [upcoming, openSessions],
+  )
 
   const filtered = useMemo(
     () =>
@@ -45,7 +66,9 @@ export function ActiveSessions() {
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">Phiên hoạt động</h2>
-          <p className="text-sm text-gray-600">Danh sách phiên gửi xe đang mở theo thời gian thực</p>
+          <p className="text-sm text-gray-600">
+            Danh sách phiên gửi xe đang mở và đặt chỗ sắp tới theo thời gian thực
+          </p>
         </div>
       </div>
 
@@ -79,23 +102,11 @@ export function ActiveSessions() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isLoading || isUpcomingLoading ? (
         <div className="py-16 text-center text-sm text-gray-500">Đang tải phiên...</div>
       ) : (
         <SessionTable sessions={filtered} />
       )}
-
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">Đặt chỗ sắp tới</h3>
-        <p className="mb-3 text-sm text-gray-600">
-          Xe đã đặt chỗ nhưng chưa check-in — đến sớm vẫn được vào nếu còn chỗ, tính phí theo giá đã đặt.
-        </p>
-        {isUpcomingLoading ? (
-          <div className="py-10 text-center text-sm text-gray-500">Đang tải đặt chỗ...</div>
-        ) : (
-          <UpcomingReservationsTable reservations={upcoming} />
-        )}
-      </div>
     </div>
   )
 }

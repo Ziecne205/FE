@@ -29,6 +29,7 @@ export const RESERVATION_STATUS_LABELS: Record<string, string> = {
 };
 
 export const SESSION_STATUS_LABELS: Record<string, string> = {
+  Preparing: 'Chuẩn bị',
   Admitted: 'Đã vào (chờ đỗ)',
   Parked: 'Đã đỗ',
   Moved: 'Đang rời ô',

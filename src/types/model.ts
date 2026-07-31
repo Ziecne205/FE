@@ -7,7 +7,10 @@
 export type SlotStatus = 'Available' | 'Occupied' | 'Maintenance'; // NO Reserved
 // 'Abandoned' là nhãn vận hành phía FE (thẻ "Bỏ dở" ở SessionStatsBar); BE hiện chưa phát ra
 // trạng thái này (mới chỉ có truy vấn nghi vấn bỏ xe) nên số đếm thực tế sẽ là 0 cho tới khi BE hỗ trợ.
-export type SessionStatus = 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception' | 'Abandoned';
+// 'Preparing' là nhãn vận hành phía FE cho đặt chỗ CHƯA check-in (Pending/Confirmed) — không
+// phải trạng thái ParkingSession thật từ BE (chưa có session nào được tạo), chỉ để gộp chung
+// vào bảng "Phiên hoạt động" cho Staff thấy trước xe nào sẽ đến (xem ActiveSessions.tsx).
+export type SessionStatus = 'Preparing' | 'Admitted' | 'Parked' | 'Moved' | 'Completed' | 'Exception' | 'Abandoned';
 export type ReservationStatus =
   | 'Pending' | 'Confirmed' | 'CheckedIn' | 'Fulfilled' | 'Cancelled' | 'Expired';
 

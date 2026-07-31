@@ -1,6 +1,6 @@
 'use client'
 
-import { Car, LogIn, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Car, LogIn, AlertTriangle, CheckCircle, CalendarClock } from 'lucide-react'
 import type { ParkingSession } from '@/types/model'
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
 }
 
 export function SessionStatsBar({ sessions }: Props) {
+  const preparing = sessions.filter((s) => s.status === 'Preparing').length
   const parked = sessions.filter((s) => s.status === 'Parked').length
   const admitted = sessions.filter((s) => s.status === 'Admitted').length
   const moved = sessions.filter((s) => s.status === 'Moved').length
@@ -17,6 +18,13 @@ export function SessionStatsBar({ sessions }: Props) {
   ).length
 
   const stats = [
+    {
+      label: 'Chuẩn bị',
+      value: preparing,
+      icon: CalendarClock,
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
+    },
     {
       label: 'Đang trong bãi',
       value: open,
@@ -55,7 +63,7 @@ export function SessionStatsBar({ sessions }: Props) {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {stats.map((s) => (
         <div
           key={s.label}

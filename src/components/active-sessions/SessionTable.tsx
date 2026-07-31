@@ -15,6 +15,7 @@ import { useNow } from '@/hooks/useNow'
 import type { ParkingSession } from '@/types/model'
 
 const STATUS_COLORS: Record<string, string> = {
+  Preparing: 'bg-purple-100 text-purple-800 border-purple-200',
   Admitted: 'bg-amber-100 text-amber-800 border-amber-200',
   Parked: 'bg-green-100 text-green-800 border-green-200',
   Moved: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -119,7 +120,7 @@ export function SessionTable({ sessions }: Props) {
               <TableCell className="text-sm text-gray-600">
                 {s.totalFee != null
                   ? formatCurrency(s.totalFee)
-                  : s.status === 'Completed'
+                  : s.status === 'Completed' || s.status === 'Preparing'
                     ? '—'
                     : <span className="text-gray-400">đang tính...</span>}
               </TableCell>
