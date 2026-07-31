@@ -54,6 +54,28 @@ export function useOpenSessions(): { data: ParkingSession[]; isLoading: boolean 
   return { data: query.data ?? [], isLoading: query.isLoading }
 }
 
+export interface UpcomingReservation {
+  reservationId: string
+  licensePlate: string
+  vehicleTypeName: string | null
+  expectedEntryTime: string
+  expectedExitTime: string
+  status: 'Pending' | 'Confirmed'
+  depositStatus: string | null
+  estimatedFeeAtBooking: number | null
+}
+
+/** Đặt chỗ chưa check-in (Pending/Confirmed), gần nhất trước — GET /staff/sessions/upcoming.
+ * Bổ sung cho useOpenSessions (chỉ phiên ĐÃ check-in thực sự) để Staff thấy trước xe nào sẽ đến. */
+export function useUpcomingReservations(): { data: UpcomingReservation[]; isLoading: boolean } {
+  const query = useQuery<UpcomingReservation[]>({
+    queryKey: ['sessions', 'upcoming'],
+    queryFn: () => api.get<UpcomingReservation[]>('/staff/sessions/upcoming'),
+    refetchInterval: REFRESH_INTERVAL,
+  })
+  return { data: query.data ?? [], isLoading: query.isLoading }
+}
+
 /** Tìm phiên đang mở theo biển số (hỗ trợ checkout) — GET /staff/sessions/search?licensePlate=. */
 export function useFindCar(plate: string): {
   data: ParkingSession | null

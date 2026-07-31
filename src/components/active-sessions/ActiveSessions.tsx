@@ -14,7 +14,8 @@ import {
 import { Search } from 'lucide-react'
 import { SessionStatsBar } from './SessionStatsBar'
 import { SessionTable } from './SessionTable'
-import { useOpenSessions } from '@/hooks/useSessions'
+import { UpcomingReservationsTable } from './UpcomingReservationsTable'
+import { useOpenSessions, useUpcomingReservations } from '@/hooks/useSessions'
 import { SESSION_STATUS_LABELS } from '@/lib/constants'
 import type { SessionStatusFilter } from './types'
 
@@ -23,6 +24,7 @@ export function ActiveSessions() {
   const [statusFilter, setStatusFilter] = useState<SessionStatusFilter>('all')
 
   const { data: sessions, isLoading } = useOpenSessions()
+  const { data: upcoming, isLoading: isUpcomingLoading } = useUpcomingReservations()
 
   const filtered = useMemo(
     () =>
@@ -82,6 +84,18 @@ export function ActiveSessions() {
       ) : (
         <SessionTable sessions={filtered} />
       )}
+
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Đặt chỗ sắp tới</h3>
+        <p className="mb-3 text-sm text-gray-600">
+          Xe đã đặt chỗ nhưng chưa check-in — đến sớm vẫn được vào nếu còn chỗ, tính phí theo giá đã đặt.
+        </p>
+        {isUpcomingLoading ? (
+          <div className="py-10 text-center text-sm text-gray-500">Đang tải đặt chỗ...</div>
+        ) : (
+          <UpcomingReservationsTable reservations={upcoming} />
+        )}
+      </div>
     </div>
   )
 }
