@@ -61,19 +61,6 @@ export function LoginPage({ onLogin, isLoading = false }: LoginPageProps) {
           </div>
 
           <LoginForm onSubmit={onLogin} isLoading={isLoading} />
-
-          {/* Demo accounts (mock) — mật khẩu chung: 123456 */}
-          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="mb-2 text-xs font-semibold text-gray-700">
-              Tài khoản demo · mật khẩu: <span className="font-mono">123456</span>
-            </p>
-            <ul className="grid grid-cols-2 gap-1 text-xs text-gray-600">
-              <li>👑 admin@parking.vn</li>
-              <li>🧑‍💼 manager@parking.vn</li>
-              <li>🛠️ staff@parking.vn</li>
-              <li>🚗 driver@parking.vn</li>
-            </ul>
-          </div>
         </div>
 
         {/* Footer */}

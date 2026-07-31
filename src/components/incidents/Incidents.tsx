@@ -14,7 +14,7 @@ import {
 import { IncidentStatsBar } from './IncidentStatsBar'
 import { IncidentTable } from './IncidentTable'
 import { ResolveIncidentDialog } from './ResolveIncidentDialog'
-import { useIncidents, useResolveIncident } from '@/hooks/useIncidents'
+import { useIncidents, useResolveIncident, useTakeOverIncident } from '@/hooks/useIncidents'
 import { useAuthStore } from '@/store'
 import { INCIDENT_TYPE_LABELS } from '@/lib/constants'
 import type { Incident, IncidentStatus, IncidentType } from '@/types/model'
@@ -29,6 +29,7 @@ export function Incidents() {
 
   const { data: incidents = [], isLoading, refetch } = useIncidents({})
   const resolveIncident = useResolveIncident()
+  const takeOverIncident = useTakeOverIncident()
 
   const filtered = useMemo(
     () =>
@@ -106,7 +107,13 @@ export function Incidents() {
       {isLoading ? (
         <div className="py-16 text-center text-gray-500">Đang tải sự cố...</div>
       ) : (
-        <IncidentTable incidents={filtered} onResolve={setResolving} />
+        <IncidentTable
+          incidents={filtered}
+          onResolve={setResolving}
+          canTakeOver={user?.role === 'Manager'}
+          onTakeOver={(inc) => takeOverIncident.mutate(inc.incidentId)}
+          isTakingOver={takeOverIncident.isPending}
+        />
       )}
 
       <ResolveIncidentDialog

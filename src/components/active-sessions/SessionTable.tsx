@@ -81,6 +81,11 @@ export function SessionTable({ sessions }: Props) {
                     Đặt chỗ
                   </span>
                 )}
+                {s.isOverstayFlagged && (
+                  <span className="ml-1.5 rounded bg-red-50 px-1 py-0.5 text-[10px] font-normal text-red-600">
+                    Quá giờ
+                  </span>
+                )}
               </TableCell>
               <TableCell className="text-sm text-gray-600">
                 {s.vehicleTypeName ?? '—'}

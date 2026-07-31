@@ -1,8 +1,11 @@
 'use client'
 
 import { QRCodeSVG } from 'qrcode.react'
-import { Banknote, QrCode, CheckCircle2, Loader2, RefreshCw } from 'lucide-react'
+import { Banknote, QrCode, CheckCircle2, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { cn, formatCurrency } from '@/lib/utils'
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import { useSessionPayosLink } from '@/hooks/useSessionPayosLink'
@@ -21,6 +24,11 @@ export function PaymentQrPanel({
   onMethodChange,
   onConfirm,
   isPending,
+  collectedAmount,
+  onCollectedAmountChange,
+  discountReason,
+  onDiscountReasonChange,
+  requireDiscountReason,
 }: PaymentQrPanelProps) {
   // QR PayOS THẬT (VietQR) tạo động theo phí đỗ hiện tại của phiên — thay cho QR placeholder.
   const payos = useSessionPayosLink()
@@ -109,11 +117,37 @@ export function PaymentQrPanel({
 
       {selectedMethod === 'Cash' && (
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <div className="flex flex-col items-center gap-2 pb-4 text-center">
             <Banknote className="h-10 w-10 text-gray-400" />
-            <p className="text-sm text-gray-600">Thu tiền mặt từ khách</p>
+            <p className="text-sm text-gray-600">Số tiền phải thu (hệ thống tính)</p>
             <p className="text-xl font-bold text-gray-900">{formatCurrency(totalFee)}</p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="collected-amount">Số tiền mặt thực thu</Label>
+            <Input
+              id="collected-amount"
+              type="number"
+              min={0}
+              value={collectedAmount}
+              onChange={(e) => onCollectedAmountChange(Number(e.target.value))}
+            />
+          </div>
+
+          {requireDiscountReason && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-amber-700">
+                <AlertTriangle className="h-4 w-4" />
+                Số tiền lệch so với hệ thống — cần nhập lý do để gửi Manager duyệt
+              </div>
+              <Textarea
+                value={discountReason}
+                onChange={(e) => onDiscountReasonChange(e.target.value)}
+                placeholder="Vd: khách trả thiếu, đồng ý giảm giá..."
+                rows={2}
+              />
+            </div>
+          )}
         </div>
       )}
 

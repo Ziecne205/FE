@@ -96,6 +96,11 @@ export function MaintenancePanel({
             />
           </div>
 
+          <p className="mb-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+            Nếu việc bảo trì làm sức chứa khả dụng xuống dưới 0, hệ thống sẽ tự động hủy các đặt chỗ mới nhất
+            đang chờ vào bãi và hoàn cọc.
+          </p>
+
           <Button className="mb-2 w-full gap-2" disabled={isLocking} onClick={onLock}>
             <Lock className="h-4 w-4" />
             {isLocking ? 'Đang khóa...' : 'Khóa vị trí & bảo trì'}

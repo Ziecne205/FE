@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, CheckCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, UserCheck, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -17,9 +17,19 @@ import type { Incident } from '@/types/model'
 interface IncidentTableProps {
   readonly incidents: Incident[]
   readonly onResolve: (incident: Incident) => void
+  /** Nhận xử lý (take-over) chỉ Manager mới gọi được (PATCH /manager/incidents/{id}/take-over). */
+  readonly canTakeOver?: boolean
+  readonly onTakeOver?: (incident: Incident) => void
+  readonly isTakingOver?: boolean
 }
 
-export function IncidentTable({ incidents, onResolve }: IncidentTableProps) {
+export function IncidentTable({
+  incidents,
+  onResolve,
+  canTakeOver,
+  onTakeOver,
+  isTakingOver,
+}: IncidentTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
@@ -48,6 +58,15 @@ export function IncidentTable({ incidents, onResolve }: IncidentTableProps) {
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-amber-500" />
                       <span className="font-medium">{INCIDENT_TYPE_LABELS[inc.issueType]}</span>
+                      {inc.escalatedAt && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700"
+                          title={`Tự động mở lại lúc ${formatDateTime(inc.escalatedAt)}`}
+                        >
+                          <RotateCcw className="h-2.5 w-2.5" />
+                          Đã tự động mở lại
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">
@@ -68,12 +87,26 @@ export function IncidentTable({ incidents, onResolve }: IncidentTableProps) {
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    {inc.status !== 'Resolved' && (
-                      <Button variant="outline" size="sm" className="gap-1" onClick={() => onResolve(inc)}>
-                        <CheckCircle className="h-3 w-3" />
-                        Xử lý
-                      </Button>
-                    )}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {canTakeOver && inc.status === 'Open' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          disabled={isTakingOver}
+                          onClick={() => onTakeOver?.(inc)}
+                        >
+                          <UserCheck className="h-3 w-3" />
+                          Nhận xử lý
+                        </Button>
+                      )}
+                      {inc.status !== 'Resolved' && (
+                        <Button variant="outline" size="sm" className="gap-1" onClick={() => onResolve(inc)}>
+                          <CheckCircle className="h-3 w-3" />
+                          Xử lý
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

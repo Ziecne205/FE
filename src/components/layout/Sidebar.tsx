@@ -7,7 +7,6 @@ import {
   Gauge,
   Map,
   Car,
-  Calendar,
   AlertTriangle,
   BarChart3,
   HelpCircle,
@@ -20,9 +19,11 @@ import {
   DollarSign,
   Users,
   Shield,
+  ShieldCheck,
   Settings,
   ScrollText,
   MonitorDot,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,10 +40,11 @@ const managerNavItems = [
   { href: '/capacity', icon: Gauge, label: 'Sức chứa' },
   { href: '/slots', icon: Map, label: 'Sơ đồ vị trí' },
   { href: '/sessions', icon: Car, label: 'Phiên hoạt động' },
-  { href: '/bookings', icon: Calendar, label: 'Đặt chỗ' },
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
+  { href: '/checkout-approvals', icon: ShieldCheck, label: 'Duyệt thanh toán' },
   { href: '/quota', icon: Sliders, label: 'Hạn mức đặt chỗ' },
   { href: '/pricing', icon: DollarSign, label: 'Quản lý giá' },
+  { href: '/payments', icon: Wallet, label: 'Hoàn cọc thủ công' },
   { href: '/reports', icon: BarChart3, label: 'Báo cáo' },
   { href: '/accounts', icon: UserPlus, label: 'Tạo tài khoản' },
 ];
@@ -56,7 +58,8 @@ const staffNavItems = [
   { href: '/incidents', icon: AlertTriangle, label: 'Sự cố' },
 ];
 
-// Phân hệ Quản trị viên — chỉ Admin thấy (gắn thêm vào sau nav của Manager).
+// Phân hệ Quản trị viên — Admin không còn là superset của Manager (BE 403 mọi endpoint /manager/** với
+// token Admin), nên Admin chỉ thấy nav này, không còn managerNavItems.
 const adminNavItems = [
   { href: '/admin/overview', icon: MonitorDot, label: 'Trung tâm Giám sát' },
   { href: '/admin/users', icon: Users, label: 'Tài khoản' },
@@ -72,7 +75,7 @@ export function Sidebar({ userRole, onNewEntry, onLogout }: SidebarProps) {
     userRole === 'Staff'
       ? staffNavItems
       : userRole === 'Admin'
-        ? [...managerNavItems, ...adminNavItems]
+        ? adminNavItems
         : managerNavItems;
 
   return (

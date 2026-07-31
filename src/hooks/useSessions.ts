@@ -3,7 +3,7 @@ import { api, type AppError } from '@/lib/api'
 import { REFRESH_INTERVAL } from '@/lib/constants'
 import type { ParkingSession, VehicleType } from '@/types/model'
 import { mapActiveSession, type BeActiveSession } from '@/lib/beApi'
-import { resolveGateId } from '@/hooks/useGates'
+import { resolveFloorGateId } from '@/hooks/useGates'
 
 export interface CreateSessionInput {
   license_plate: string
@@ -21,7 +21,7 @@ export function useCreateSession() {
       const vts = queryClient.getQueryData<VehicleType[]>(['vehicle-types']) ?? []
       const car = vts.find((v) => /car|ô\s*tô|oto/i.test(v.name)) ?? vts[0]
       const vehicleTypeId = car ? Number(car.id) : 1
-      const entryGateId = await resolveGateId(queryClient, 'Entry')
+      const entryGateId = await resolveFloorGateId(queryClient, 'Entry')
       // BE check-in dùng vehicleTypeId + entryGateId; slot_id của form được bỏ qua
       // (camera/Manager mới gán ô thực tế).
       return api.post('/staff/sessions/check-in', {

@@ -1,12 +1,12 @@
 'use client'
 
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
-import { Reservations } from '@/components/reservations'
+import { Payments } from '@/components/payments'
 
-export default function BookingsPage() {
+export default function PaymentsPage() {
   return (
     <ProtectedLayout>
-      <Reservations />
+      <Payments />
     </ProtectedLayout>
   )
 }
