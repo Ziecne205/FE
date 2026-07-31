@@ -28,13 +28,6 @@ export function ReportsHeader({ range, onRangeChange, onExport }: ReportsHeaderP
             className="text-sm text-gray-800 border-none outline-none bg-transparent"
           />
         </div>
-        <button
-          onClick={onExport}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Xuất Excel
-        </button>
       </div>
     </div>
   )
