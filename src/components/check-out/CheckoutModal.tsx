@@ -38,6 +38,8 @@ export function CheckoutModal({ session, onClose }: CheckoutModalProps) {
             licensePlate={session.licensePlate}
             entryTime={session.entryTime}
             totalFee={session.totalFee ?? 0}
+            depositAlreadyPaid={session.depositAlreadyPaid ?? 0}
+            amountDue={session.amountDue ?? session.totalFee ?? 0}
           />
         )}
       </DialogContent>

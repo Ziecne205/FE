@@ -8,6 +8,8 @@ export function FeeBreakdown({
   licensePlate,
   entryTime,
   totalFee,
+  depositAlreadyPaid,
+  amountDue,
   breakdown,
   durationMinutes,
 }: FeeBreakdownProps) {
@@ -49,12 +51,23 @@ export function FeeBreakdown({
               <span className="font-medium text-gray-800">{formatCurrency(line.subtotal)}</span>
             </div>
           ))}
+          {depositAlreadyPaid > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Đã cọc trước</span>
+              <span className="font-medium text-green-600">-{formatCurrency(depositAlreadyPaid)}</span>
+            </div>
+          )}
         </div>
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-700">Tổng phí phải thu</span>
-            <span className="text-2xl font-bold text-blue-600">{formatCurrency(totalFee)}</span>
+            <span className="text-sm font-semibold text-gray-700">Còn phải thu</span>
+            <span className="text-2xl font-bold text-blue-600">{formatCurrency(amountDue)}</span>
           </div>
+          {depositAlreadyPaid > 0 && (
+            <p className="mt-1 text-xs text-gray-400">
+              Tổng phí đỗ xe {formatCurrency(totalFee)} — đã trừ {formatCurrency(depositAlreadyPaid)} tiền cọc
+            </p>
+          )}
         </div>
       </div>
     </div>

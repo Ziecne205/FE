@@ -12,6 +12,8 @@ function ExitPaymentContent() {
   const licensePlate = params.get('licensePlate') ?? MOCK_EXIT_SESSION.licensePlate
   const entryTime = params.get('entryTime') ?? MOCK_EXIT_SESSION.entryTime
   const totalFee = Number(params.get('totalFee') ?? MOCK_EXIT_SESSION.totalFee)
+  const depositAlreadyPaid = Number(params.get('depositAlreadyPaid') ?? 0)
+  const amountDue = Number(params.get('amountDue') ?? totalFee)
 
   return (
     <ExitPayment
@@ -19,6 +21,8 @@ function ExitPaymentContent() {
       licensePlate={licensePlate}
       entryTime={entryTime}
       totalFee={totalFee}
+      depositAlreadyPaid={depositAlreadyPaid}
+      amountDue={amountDue}
     />
   )
 }

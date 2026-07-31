@@ -30,13 +30,22 @@ function computeBreakdown(entryTime: string, totalFee: number): FeeBreakdownLine
   ]
 }
 
-export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: ExitPaymentProps) {
+export function ExitPayment({
+  sessionId,
+  licensePlate,
+  entryTime,
+  totalFee,
+  depositAlreadyPaid = 0,
+  amountDue,
+}: ExitPaymentProps) {
   const [method, setMethod] = useState<PaymentMethod>('QR')
   const [success, setSuccess] = useState(false)
   const [pendingApproval, setPendingApproval] = useState(false)
-  const [paidAmount, setPaidAmount] = useState(totalFee)
+  const [paidAmount, setPaidAmount] = useState(amountDue)
   const [isOverstay, setIsOverstay] = useState(false)
-  const [collectedAmount, setCollectedAmount] = useState(totalFee)
+  // So tien thuc phai thu (da tru coc) — KHONG dung totalFee (gop) de tranh bat khach tra du
+  // phan da coc, xem ActiveSessionDto.amountDue o BE.
+  const [collectedAmount, setCollectedAmount] = useState(amountDue)
   const [discountReason, setDiscountReason] = useState('')
   const [requireDiscountReason, setRequireDiscountReason] = useState(false)
 
@@ -58,7 +67,7 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
       },
       {
         onSuccess: (res) => {
-          setPaidAmount(res.amount || totalFee)
+          setPaidAmount(res.amount ?? amountDue)
           setIsOverstay(res.isOverstay)
           if (res.pendingApproval) {
             setPendingApproval(true)
@@ -142,13 +151,15 @@ export function ExitPayment({ sessionId, licensePlate, entryTime, totalFee }: Ex
           licensePlate={licensePlate}
           entryTime={entryTime}
           totalFee={totalFee}
+          depositAlreadyPaid={depositAlreadyPaid}
+          amountDue={amountDue}
           breakdown={breakdown}
           durationMinutes={durationMinutes}
         />
 
         <PaymentQrPanel
           sessionId={sessionId}
-          totalFee={totalFee}
+          amountDue={amountDue}
           selectedMethod={method}
           onMethodChange={setMethod}
           onConfirm={handleConfirm}

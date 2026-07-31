@@ -123,6 +123,11 @@ export function SessionTable({ sessions }: Props) {
                   : s.status === 'Completed' || s.status === 'Preparing'
                     ? '—'
                     : <span className="text-gray-400">đang tính...</span>}
+                {!!s.depositAlreadyPaid && s.depositAlreadyPaid > 0 && (
+                  <span className="ml-1.5 rounded bg-green-50 px-1 py-0.5 text-[10px] font-normal text-green-600">
+                    đã cọc {formatCurrency(s.depositAlreadyPaid)}
+                  </span>
+                )}
               </TableCell>
             </TableRow>
           ))}

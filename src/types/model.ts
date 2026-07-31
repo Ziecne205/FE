@@ -76,7 +76,13 @@ export interface ParkingSession {
   parkedTime?: string;
   movedTime?: string;
   exitTime?: string;
+  /** Phí tạm tính GỘP (chưa trừ cọc) — dùng để hiển thị thông tin, KHÔNG dùng để thu tiền. */
   totalFee?: number;
+  /** Tiền cọc đã thanh toán trước (0 nếu không có đặt chỗ / cọc chưa Paid). */
+  depositAlreadyPaid?: number;
+  /** Số tiền THỰC còn phải thu = totalFee - depositAlreadyPaid - đã thanh toán online khác.
+   * Đây là con số phải dùng khi thu tiền / tạo QR ở cổng ra, không phải totalFee. */
+  amountDue?: number;
   isPaid: boolean;
   status: SessionStatus;
   isForceCheckIn?: boolean; // staff overrode a plate mismatch at check-in

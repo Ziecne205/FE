@@ -62,7 +62,9 @@ export interface BeActiveSession {
   isForceCheckIn?: boolean | null  // staff overrode plate mismatch
   isOverstay?: boolean | null      // session exceeded 24h grace period (walk-in) / expectedExitTime (reservation)
   isOverstayFlagged?: boolean | null // background job: reservation-backed session past expectedExitTime+30min, still open
-  estimatedFee?: number | null     // phí tạm tính theo bảng giá đến hiện tại
+  estimatedFee?: number | null     // phí tạm tính GỘP theo bảng giá đến hiện tại (chưa trừ cọc)
+  depositAlreadyPaid?: number | null // tiền cọc đã thanh toán (0 nếu không có đặt chỗ / cọc chưa Paid)
+  amountDue?: number | null        // số tiền THỰC còn phải thu = estimatedFee - depositAlreadyPaid - đã thanh toán online khác
 }
 
 export interface BeIncident {
@@ -278,7 +280,9 @@ export function mapActiveSession(s: BeActiveSession): ParkingSession {
     actualSlotCode: s.actualSlotCode ?? undefined,
     entryTime: s.entryTime,
     isPaid: false,
-    totalFee: s.estimatedFee ?? undefined, // phí tạm tính từ BE (null khi chưa có bảng giá)
+    totalFee: s.estimatedFee ?? undefined, // phí tạm tính GỘP từ BE (null khi chưa có bảng giá)
+    depositAlreadyPaid: s.depositAlreadyPaid ?? undefined,
+    amountDue: s.amountDue ?? undefined,
     status: s.status as SessionStatus,
     isForceCheckIn: s.isForceCheckIn ?? undefined,
     isOverstay: s.isOverstay ?? undefined,

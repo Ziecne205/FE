@@ -19,7 +19,7 @@ const METHODS: { value: PaymentMethod; icon: React.ReactNode; label: string }[] 
 
 export function PaymentQrPanel({
   sessionId,
-  totalFee,
+  amountDue,
   selectedMethod,
   onMethodChange,
   onConfirm,
@@ -120,7 +120,7 @@ export function PaymentQrPanel({
           <div className="flex flex-col items-center gap-2 pb-4 text-center">
             <Banknote className="h-10 w-10 text-gray-400" />
             <p className="text-sm text-gray-600">Số tiền phải thu (hệ thống tính)</p>
-            <p className="text-xl font-bold text-gray-900">{formatCurrency(totalFee)}</p>
+            <p className="text-xl font-bold text-gray-900">{formatCurrency(amountDue)}</p>
           </div>
 
           <div className="space-y-2">
