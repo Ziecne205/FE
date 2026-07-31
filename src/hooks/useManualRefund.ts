@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export interface ManualRefundResponse {
   id: string;
@@ -21,10 +21,8 @@ export function useAllRefundRequests() {
   return useQuery({
     queryKey: ["allRefundRequests"],
     queryFn: async () => {
-      const response = await apiClient.get<{ data: ManualRefundResponse[] }>(
-        "/manager/manual-refunds"
-      );
-      return response.data.data;
+      const response = await api.get<ManualRefundResponse[]>("/manager/manual-refunds");
+      return response;
     },
   });
 }
@@ -34,10 +32,10 @@ export function useMarkRefundProcessed() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.patch<{ data: ManualRefundResponse }>(
+      const response = await api.patch<ManualRefundResponse>(
         `/manager/manual-refunds/${id}/mark-processed`
       );
-      return response.data.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allRefundRequests"] });

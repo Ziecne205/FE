@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { useAllRefundRequests, useMarkRefundProcessed } from '@/hooks/useManualRefund'
-import { format } from 'date-fns'
 import { Check, HandCoins } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
 export function ManualRefundList() {
   const { data: requests, isLoading } = useAllRefundRequests()
@@ -55,7 +54,13 @@ export function ManualRefundList() {
                 <td className="px-6 py-4">
                   <span className="font-mono text-blue-600 font-medium">#{req.reservationId}</span>
                   <div className="text-xs text-gray-400 mt-1">
-                    Ngày yêu cầu: {format(new Date(req.requestedAt), 'dd/MM/yyyy HH:mm')}
+                    Ngày yêu cầu: {new Date(req.requestedAt).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </div>
                 </td>
                 <td className="px-6 py-4">
