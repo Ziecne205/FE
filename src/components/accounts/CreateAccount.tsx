@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Eye, EyeOff, UserPlus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,21 +9,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreateUser } from '@/hooks/useAdmin'
+import { useAuthStore } from '@/store/auth'
 
-const schema = z.object({
-  username: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
-  fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
-  roleName: z.enum(['Manager', 'Staff'], { message: 'Chọn vai trò' }),
-  email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
-  phoneNumber: z
-    .string()
-    .regex(/^[0-9+\-\s]{9,15}$/, 'Số điện thoại không hợp lệ')
-    .optional()
-    .or(z.literal('')),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-})
+const BASE_ROLES = ['Manager', 'Staff'] as const
+const ADMIN_ROLES = ['Admin', 'Manager', 'Staff'] as const
 
-type FormData = z.infer<typeof schema>
+function buildSchema(isAdmin: boolean) {
+  return z.object({
+    username: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
+    fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
+    roleName: z.enum(isAdmin ? ADMIN_ROLES : BASE_ROLES, { message: 'Chọn vai trò' }),
+    email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
+    phoneNumber: z
+      .string()
+      .regex(/^[0-9+\-\s]{9,15}$/, 'Số điện thoại không hợp lệ')
+      .optional()
+      .or(z.literal('')),
+    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  })
+}
+
+type FormData = z.infer<ReturnType<typeof buildSchema>>
 
 const inputCls =
   'w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none'
@@ -37,6 +43,8 @@ interface CreateAccountProps {
 export function CreateAccount({ onCreated }: CreateAccountProps = {}) {
   const [showPassword, setShowPassword] = useState(false)
   const createUser = useCreateUser()
+  const isAdmin = useAuthStore((s) => s.user?.role === 'Admin')
+  const schema = useMemo(() => buildSchema(isAdmin), [isAdmin])
 
   const {
     register,
@@ -71,7 +79,11 @@ export function CreateAccount({ onCreated }: CreateAccountProps = {}) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold text-gray-900">Tạo tài khoản</h2>
-        <p className="text-sm text-gray-600">Tạo tài khoản nhân viên (Staff) hoặc quản lý (Manager) mới.</p>
+        <p className="text-sm text-gray-600">
+          {isAdmin
+            ? 'Tạo tài khoản Nhân viên (Staff), Quản lý (Manager) hoặc Quản trị viên (Admin) mới.'
+            : 'Tạo tài khoản nhân viên (Staff) hoặc quản lý (Manager) mới.'}
+        </p>
       </div>
 
       <form
@@ -94,6 +106,7 @@ export function CreateAccount({ onCreated }: CreateAccountProps = {}) {
             <select id="acc-role" className={inputCls} {...register('roleName')}>
               <option value="Staff">Nhân viên (Staff)</option>
               <option value="Manager">Quản lý (Manager)</option>
+              {isAdmin && <option value="Admin">Quản trị viên (Admin)</option>}
             </select>
             {errors.roleName && <p className="mt-1 text-xs text-red-600">{errors.roleName.message}</p>}
           </div>
