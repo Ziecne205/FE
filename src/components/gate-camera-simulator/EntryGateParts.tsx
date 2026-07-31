@@ -67,7 +67,7 @@ export function EntryCameraFeed({
       {state === 'DUPLICATE' && (
         <div className="absolute inset-0 bg-red-900/60 flex items-center justify-center text-center px-4">
           <span className="text-white text-lg font-black tracking-wide">
-            XE ĐÃ TRONG BÃI ĐẬU, VUI LÒNG KIỂM TRA LẠI
+            BIỂN SỐ XE ĐÃ CÓ TRONG BÃI, HÃY KIỂM TRA LẠI
           </span>
         </div>
       )}
@@ -228,7 +228,7 @@ export function FullPanel({ onReset }: { onReset: () => void }) {
 export function DuplicatePanel({ onReset }: { onReset: () => void }) {
   return (
     <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-center">
-      <p className="text-red-700 font-bold text-lg">Xe đã trong bãi đậu, vui lòng kiểm tra lại</p>
+      <p className="text-red-700 font-bold text-lg">Biển số xe đã có trong bãi, hãy kiểm tra lại</p>
       <p className="text-red-600 text-sm mt-1">Biển số này đang có một phiên đỗ khác chưa check-out.</p>
       <button onClick={onReset} className="mt-3 text-xs text-gray-500 hover:underline">
         Đặt lại

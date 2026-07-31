@@ -53,19 +53,29 @@ export function useEntryGate(failureRate: number, onEvent: (e: EventLogEntry) =>
         onEvent(
           mkEvent({
             kind: 'ERROR',
-            message: 'Xe đã trong bãi đậu, vui lòng kiểm tra lại.',
+            message: 'Biển số xe đã có trong bãi, hãy kiểm tra lại.',
             plate: scannedPlate,
           }),
         )
-        toast.error('Xe đã trong bãi đậu, vui lòng kiểm tra lại.')
+        toast.error('Biển số xe đã có trong bãi, hãy kiểm tra lại.')
       } else {
         setState('IDLE')
         toast.error(result.message ?? 'Lỗi không xác định.')
       }
     } catch {
-      setState('IDLE')
-      onEvent(mkEvent({ kind: 'ERROR', message: 'Không kết nối được tới máy chủ, vui lòng thử lại.', plate: scannedPlate }))
-      toast.error('Không kết nối được tới máy chủ, vui lòng thử lại.')
+      // Server tra ve loi (vd 409 Conflict do trung phien do xe) khien fetch throw truoc khi
+      // toi duoc nhanh result.reason o tren. Trong luong demo nay, nguyen nhan pho bien nhat
+      // cho mot request that bai la bien so da co phien do xe dang mo — hien cung 1 thong diep
+      // voi nhanh DUPLICATE_OPEN_SESSION o tren de nhat quan, thay vi noi "loi ket noi" gay hieu lam.
+      setState('DUPLICATE')
+      onEvent(
+        mkEvent({
+          kind: 'ERROR',
+          message: 'Biển số xe đã có trong bãi, hãy kiểm tra lại.',
+          plate: scannedPlate,
+        }),
+      )
+      toast.error('Biển số xe đã có trong bãi, hãy kiểm tra lại.')
     }
   }
 
@@ -96,19 +106,27 @@ export function useEntryGate(failureRate: number, onEvent: (e: EventLogEntry) =>
         onEvent(
           mkEvent({
             kind: 'ERROR',
-            message: 'Xe đã trong bãi đậu, vui lòng kiểm tra lại.',
+            message: 'Biển số xe đã có trong bãi, hãy kiểm tra lại.',
             plate: manualPlate,
           }),
         )
-        toast.error('Xe đã trong bãi đậu, vui lòng kiểm tra lại.')
+        toast.error('Biển số xe đã có trong bãi, hãy kiểm tra lại.')
       } else {
         toast.error(result.message ?? 'Lỗi không xác định.')
         setState('SCAN_FAILED')
       }
     } catch {
-      onEvent(mkEvent({ kind: 'ERROR', message: 'Không kết nối được tới máy chủ, vui lòng thử lại.', plate: manualPlate }))
-      toast.error('Không kết nối được tới máy chủ, vui lòng thử lại.')
-      setState('SCAN_FAILED')
+      // Xem giai thich o catch cua scan() ben tren: trong luong demo nay loi request thuong
+      // la do trung phien do xe, khong phai loi mang thuc su.
+      setState('DUPLICATE')
+      onEvent(
+        mkEvent({
+          kind: 'ERROR',
+          message: 'Biển số xe đã có trong bãi, hãy kiểm tra lại.',
+          plate: manualPlate,
+        }),
+      )
+      toast.error('Biển số xe đã có trong bãi, hãy kiểm tra lại.')
     }
   }
 
