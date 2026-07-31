@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, calculateDuration } from '@/lib/utils'
 import { usePayParking } from '@/hooks/usePayParking'
+import { useLiveAmountDue } from '@/hooks/useSessions'
 import type { AppError } from '@/lib/api'
 import { FeeBreakdown } from './FeeBreakdown'
 import { PaymentQrPanel } from './PaymentQrPanel'
@@ -54,40 +55,65 @@ export function ExitPayment({
   const durationMinutes = calculateDuration(entryTime)
   const breakdown = computeBreakdown(entryTime, totalFee)
 
-  function handleConfirm() {
-    // Check-out thật theo biển số; BE trả về số tiền đã tính để hiển thị biên nhận.
-    // Cash: gửi kèm collectedAmount — nếu lệch quá cashToleranceVnd, BE báo CASH_AMOUNT_MISMATCH
-    // (chưa có discountReason) hoặc trả pendingApproval=true (đã có discountReason, chờ Manager duyệt).
-    mutate(
-      {
-        licensePlate,
-        paymentMethod: method,
-        collectedAmount: method === 'Cash' ? collectedAmount : undefined,
-        discountReason: method === 'Cash' && requireDiscountReason ? discountReason : undefined,
-      },
-      {
-        onSuccess: (res) => {
-          setPaidAmount(res.amount ?? amountDue)
-          setIsOverstay(res.isOverstay)
-          if (res.pendingApproval) {
-            setPendingApproval(true)
-          } else {
-            setSuccess(true)
-          }
+  const handleConfirm = useCallback(
+    (auto = false) => {
+      // Check-out thật theo biển số; BE trả về số tiền đã tính để hiển thị biên nhận.
+      // Cash: gửi kèm collectedAmount — nếu lệch quá cashToleranceVnd, BE báo CASH_AMOUNT_MISMATCH
+      // (chưa có discountReason) hoặc trả pendingApproval=true (đã có discountReason, chờ Manager duyệt).
+      mutate(
+        {
+          licensePlate,
+          paymentMethod: method,
+          collectedAmount: method === 'Cash' ? collectedAmount : undefined,
+          discountReason: method === 'Cash' && requireDiscountReason ? discountReason : undefined,
         },
-        onError: (err) => {
-          const appErr = err as AppError
-          if (appErr.code === 'CASH_AMOUNT_MISMATCH') {
-            setRequireDiscountReason(true)
-          } else {
-            // Truoc day loi khac CASH_AMOUNT_MISMATCH bi "nuot" — nut khong lam gi ca, khien
-            // Staff tuong nhu khong hoat dong. Luon hien thong bao ro rang cho MOI loi khac.
-            toast.error(appErr.message || 'Check-out thất bại, vui lòng thử lại.')
-          }
+        {
+          onSuccess: (res) => {
+            setPaidAmount(res.amount ?? amountDue)
+            setIsOverstay(res.isOverstay)
+            if (res.pendingApproval) {
+              setPendingApproval(true)
+            } else {
+              setSuccess(true)
+            }
+          },
+          onError: (err) => {
+            const appErr = err as AppError
+            if (appErr.code === 'CASH_AMOUNT_MISMATCH') {
+              setRequireDiscountReason(true)
+            } else if (!auto) {
+              // Truoc day loi khac CASH_AMOUNT_MISMATCH bi "nuot" — nut khong lam gi ca, khien
+              // Staff tuong nhu khong hoat dong. Luon hien thong bao ro rang cho MOI loi khac.
+              // Khi auto-confirm (poll QR) that bai thi khong hien loi tho — cu de Staff bam tay,
+              // vong poll tiep theo se tu thu lai.
+              toast.error(appErr.message || 'Check-out thất bại, vui lòng thử lại.')
+            }
+          },
         },
-      },
-    )
-  }
+      )
+    },
+    [mutate, licensePlate, method, collectedAmount, requireDiscountReason, discountReason, amountDue],
+  )
+
+  // Tu dong xac nhan check-out khi phat hien khach da quet QR PayOS tra du tien (webhook cap
+  // nhat Payment "Success" -> amountDue tut ve 0 tren server) — Staff khong can bam nut thu cong.
+  // Chi bat khi dang chon phuong thuc QR, chua thanh cong/dang cho duyet, va chi tu bam 1 lan.
+  const shouldPollPayment = method === 'QR' && !success && !pendingApproval
+  const liveAmountDue = useLiveAmountDue(licensePlate, shouldPollPayment)
+  const autoConfirmedRef = useRef(false)
+
+  useEffect(() => {
+    if (
+      shouldPollPayment &&
+      liveAmountDue != null &&
+      liveAmountDue <= 0 &&
+      !autoConfirmedRef.current &&
+      !isPending
+    ) {
+      autoConfirmedRef.current = true
+      handleConfirm(true)
+    }
+  }, [shouldPollPayment, liveAmountDue, isPending, handleConfirm])
 
   if (pendingApproval) {
     return (
@@ -162,7 +188,7 @@ export function ExitPayment({
           amountDue={amountDue}
           selectedMethod={method}
           onMethodChange={setMethod}
-          onConfirm={handleConfirm}
+          onConfirm={() => handleConfirm(false)}
           isPending={isPending}
           collectedAmount={collectedAmount}
           onCollectedAmountChange={setCollectedAmount}
@@ -171,6 +197,13 @@ export function ExitPayment({
           requireDiscountReason={requireDiscountReason}
         />
       </div>
+
+      {shouldPollPayment && (
+        <p className="text-center text-xs text-gray-400">
+          Hệ thống tự động kiểm tra thanh toán QR mỗi vài giây — không cần bấm xác nhận nếu khách đã
+          quét trả tiền.
+        </p>
+      )}
 
       <div className="pt-2">
         <Button

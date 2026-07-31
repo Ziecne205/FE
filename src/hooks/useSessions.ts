@@ -103,6 +103,33 @@ export function useFindCar(plate: string): {
   return { data: query.data ?? null, isError: query.isError, error: query.error ?? null }
 }
 
+/**
+ * Poll amountDue (so tien THUC con phai thu, da tru coc/thanh toan online) theo bien so — dung
+ * de man Check-out tu dong nhan ra khach da quet QR PayOS tra tien xong (webhook cap nhat Payment
+ * "Success" -> amountDue tut ve 0) MA KHONG can Staff bam nut xac nhan thu cong. Xem
+ * ExitPayment.tsx: khi amountDue <= 0 thi tu dong goi check-out that su.
+ */
+export function useLiveAmountDue(licensePlate: string, enabled: boolean): number | null {
+  const query = useQuery<number | null, AppError>({
+    queryKey: ['sessions', 'amountDue', licensePlate],
+    queryFn: async () => {
+      try {
+        const dto = await api.get<BeActiveSession>(
+          `/staff/sessions/search?licensePlate=${encodeURIComponent(licensePlate)}`,
+        )
+        return dto.amountDue ?? null
+      } catch (err) {
+        if ((err as AppError)?.status === 404) return null
+        throw err
+      }
+    },
+    enabled: enabled && licensePlate.length >= 4,
+    refetchInterval: enabled ? 4000 : false,
+    retry: false,
+  })
+  return query.data ?? null
+}
+
 export interface StaffForceCheckInInput {
   sessionId: string | number
   actualPlate: string
