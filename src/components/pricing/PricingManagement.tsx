@@ -45,16 +45,20 @@ type PricingFieldKey = (typeof PRICING_FIELDS)[number]['key']
  */
 function PricingPolicyRow({ policy }: { readonly policy: PricingPolicy }) {
   const updatePricing = useUpdatePricing()
-  const [form, setForm] = useState<Record<PricingFieldKey, string>>(() => ({
+  const [form, setForm] = useState<Record<PricingFieldKey, string> & { effectiveDate: string }>(() => ({
     basePrice: String(policy.basePrice),
     baseHours: String(policy.baseHours),
     extraHourPrice: String(policy.extraHourPrice),
     nightSurcharge: String(policy.nightSurcharge),
     lostTicketFee: String(policy.lostTicketFee),
+    effectiveDate: policy.effectiveDate
+      ? new Date(policy.effectiveDate).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0],
   }))
 
   const num = (k: PricingFieldKey) => Number(form[k])
-  const dirty = PRICING_FIELDS.some((f) => num(f.key) !== policy[f.key])
+  const dirty = PRICING_FIELDS.some((f) => num(f.key) !== policy[f.key]) ||
+    form.effectiveDate !== new Date(policy.effectiveDate).toISOString().split('T')[0]
   const valid =
     PRICING_FIELDS.every((f) => form[f.key].trim() !== '' && Number.isFinite(num(f.key))) &&
     num('basePrice') > 0 &&
@@ -67,7 +71,7 @@ function PricingPolicyRow({ policy }: { readonly policy: PricingPolicy }) {
     updatePricing.mutate({
       policyId: policy.policyId,
       vehicleTypeId: policy.vehicleTypeId,
-      effectiveDate: policy.effectiveDate,
+      effectiveDate: form.effectiveDate ? new Date(form.effectiveDate).toISOString() : policy.effectiveDate,
       basePrice: num('basePrice'),
       baseHours: num('baseHours'),
       extraHourPrice: num('extraHourPrice'),
@@ -78,11 +82,17 @@ function PricingPolicyRow({ policy }: { readonly policy: PricingPolicy }) {
 
   return (
     <div className="px-5 py-4">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-gray-900">{policy.vehicleTypeName}</span>
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          Áp dụng từ {new Date(policy.effectiveDate).toLocaleDateString('vi-VN')}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500">Áp dụng từ</span>
+          <input
+            type="date"
+            value={form.effectiveDate}
+            onChange={(e) => setForm((s) => ({ ...s, effectiveDate: e.target.value }))}
+            className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {PRICING_FIELDS.map((f) => (
